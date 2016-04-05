@@ -11,7 +11,7 @@
 using namespace std;
 
 class FileExplorer {
-	wchar_t			drive = L'D';
+	wchar_t			drive = L'C';
 public:
 	vector<wstring> path;
 	UINT32			currentPos = 0;

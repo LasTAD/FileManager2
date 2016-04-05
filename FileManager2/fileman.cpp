@@ -8,7 +8,7 @@ void FileExplorer::parsePath()
 
 	fileList.clear();
 	WIN32_FIND_DATA data;
-	HANDLE h = FindFirstFileW(path.c_str(), &data);
+	HANDLE h = FindFirstFileW(findpath.c_str(), &data);
 	do {
 		File file;
 		file.name = data.cFileName;
@@ -20,7 +20,7 @@ void FileExplorer::parsePath()
 	FindClose(h);
 
 	first = 0;
-	last = min(fileList.size(), filesPerPage - 1);
+	last = min(fileList.size() - 1, filesPerPage - 1);
 
 	updateView();
 }
