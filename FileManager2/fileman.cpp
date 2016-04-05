@@ -1,0 +1,64 @@
+#include "fileman.h"
+
+void FileExplorer::parsePath()
+{
+	wstring path, findpath;
+	getPath(path);
+	findpath = path + L"*.*";
+
+	fileList.clear();
+	WIN32_FIND_DATA data;
+	HANDLE h = FindFirstFileW(path.c_str(), &data);
+	do {
+		File file;
+		file.name = data.cFileName;
+		file.fullname = path + data.cFileName;
+		file.size = (data.nFileSizeHigh * MAXDWORD) + data.nFileSizeLow;
+		file.isDir = data.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY != 0;
+		fileList.push_back(file);
+	} while (FindNextFileW(h, &data));
+	FindClose(h);
+
+	first = 0;
+	last = min(fileList.size(), filesPerPage - 1);
+
+	updateView();
+}
+
+void FileExplorer::down()
+{
+	if (currentPos < fileList.size() - 1) {
+		currentPos++;
+	}
+	updateView();
+}
+
+void FileExplorer::up()
+{
+	if (currentPos > 0) {
+		currentPos--;
+	}
+	updateView();
+}
+
+void FileExplorer::getPath(wstring &pathString)
+{
+	wstringstream wss;
+	wss << drive << L":\\";
+	for (auto i : path) {
+		wss << i << L'\\';
+	}
+	pathString = wss.str();
+}
+
+inline void FileExplorer::updateView()
+{
+	if (currentPos > last) {
+		last = currentPos;
+		first = last - filesPerPage + 1;
+	}
+	else if (currentPos < first) {
+		first = currentPos;
+		last = first + filesPerPage - 1;
+	}
+}
