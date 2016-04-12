@@ -7,4 +7,5 @@ struct File {
 	std::wstring	fullname;
 	ULONG64			size;
 	bool			isDir;
+	bool			modifier = false;
 };
