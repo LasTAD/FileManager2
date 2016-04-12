@@ -2,7 +2,7 @@
 
 int main() {
 	FileExplorer files;
-	//files->path.push_back(L"Windows");
+	files.path.push_back(L"Windows"); 
 	files.parsePath();
 
 	INPUT_RECORD pin;

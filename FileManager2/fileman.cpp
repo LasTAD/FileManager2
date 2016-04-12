@@ -16,6 +16,7 @@ void FileExplorer::parsePath()
 		file.size = (data.nFileSizeHigh * MAXDWORD) + data.nFileSizeLow;
 		file.isDir = data.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY != 0;
 		fileList.push_back(file);
+		//MessageBoxW(NULL, file.fullname.c_str(), L"", 0);
 	} while (FindNextFileW(h, &data));
 	FindClose(h);
 
@@ -30,6 +31,9 @@ void FileExplorer::down()
 	if (currentPos < fileList.size() - 1) {
 		currentPos++;
 	}
+	else if (fileList.size() - 1 == currentPos) {
+		currentPos = 0;
+	}
 	updateView();
 }
 
@@ -37,6 +41,9 @@ void FileExplorer::up()
 {
 	if (currentPos > 0) {
 		currentPos--;
+	}
+	else if(0 == currentPos) {
+		currentPos = fileList.size() - 1;
 	}
 	updateView();
 }
