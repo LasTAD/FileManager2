@@ -1,22 +1,31 @@
 #include "file_act.h"
+using namespace std;
 
-
-void FileCopy::StartCopy()
+void FileCopy::StartCopy(wstring &srcPath)
 {
+	Console consoleCopy;
 	
+	wstring resPath;
+	consoleCopy.hideCursor();
+	wcout << "Input path to pasred file: ";
+	wcin >> resPath;
+	Copy(srcPath, resPath);
+	updateView(); //не делает то, что я хочу
 }
 
-void FileCopy::Copy(wstring src, wstring res)
+void FileCopy::Copy(wstring &src, wstring &res)
 {
 	errno_t err;
 	FILE *fileSrc, *fileRes;
 	err = _wfopen_s(&fileSrc, src.c_str(), L"r+b");
-	if (!err) {
+	if (err) {
 		MessageBox(NULL, L"Unable to open requested file!", L"Error", 0);
+		return;
 	}
 	err = _wfopen_s(&fileRes, res.c_str(), L"w+b");
-	if (!err) {
+	if (err) {
 		MessageBox(NULL, L"Unable to create new file!", L"Error", 0);
+		return;
 	}
 	unsigned int fsize, n;
 	fseek(fileSrc, 0, SEEK_END);

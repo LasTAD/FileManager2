@@ -1,11 +1,11 @@
 #pragma once
 #include "fileman.h"
-#include "other.h"
+using namespace std;
 
-class FileCopy {
+class FileCopy : public FileExplorer {
+	
 public:
-	void StartCopy();
+	void StartCopy(wstring &);
 private:
-	//std::wstring src, res;
-	void Copy(wstring, wstring);
+	void Copy(wstring &, wstring &);
 };

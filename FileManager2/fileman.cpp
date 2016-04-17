@@ -1,4 +1,5 @@
 #include "fileman.h"
+#include "file_act.h"
 
 void FileExplorer::parsePath()
 {
@@ -122,6 +123,7 @@ void Console::showCursor()
 
 void Console::work()
 {
+	FileCopy filecopy;
 	hstdin = GetStdHandle(STD_INPUT_HANDLE);
 	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	hideCursor();
@@ -181,7 +183,21 @@ void Console::work()
 						wprintf(L"\n");
 					}
 				}
-				//TODO: вызов копирования при помощи клавиши F2
+				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
+					system("cls");
+					int i = fileExplorer.currentPos;
+					filecopy.StartCopy(fileExplorer.fileList[i].fullname);
+				
+					system("cls");
+					fileExplorer.getPath(p);
+					wcout << "Current dir: " << p << endl;
+					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
+						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
+						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						wprintf(fileExplorer.fileList[i].name.c_str());
+						wprintf(L"\n");
+					}
+				}
 			}
 		}
 	}

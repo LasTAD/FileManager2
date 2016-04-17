@@ -24,15 +24,16 @@ public:
 	void			down();
 	void			up();
 	void			enter();
-private:
+protected:
 	inline void		updateView();
 };
 
 class Console {
 	HANDLE			hstdout, hstdin;
 	FileExplorer	fileExplorer;
+
 public:
-	void hideCursor();
-	void showCursor();
-	void work();
+	void			hideCursor();
+	void			showCursor();
+	void			work();
 };
