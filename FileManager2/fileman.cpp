@@ -149,6 +149,15 @@ void Console::work()
 		  wcout << fileExplorer.fileList[i].name << endl; 
 		  fileExplorer.SetColor(7, 0);
 	}
+	fileExplorer.SetColor(15, 3);
+	wcout << "F2";
+	fileExplorer.SetColor(7, 0);
+	wcout << "Copy\t";
+	fileExplorer.SetColor(15, 3);
+	wcout << "F3";
+	fileExplorer.SetColor(7, 0);
+	wcout<<"Delete";
+
 
 	HANDLE _hin = GetStdHandle(STD_INPUT_HANDLE);
 	while (!WaitForSingleObject(_hin, INFINITE)) {
@@ -170,6 +179,14 @@ void Console::work()
 						wprintf(L"\n");
 						fileExplorer.SetColor(7, 0);
 					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_DOWN) {
 					fileExplorer.down();
@@ -186,12 +203,21 @@ void Console::work()
 						wprintf(L"\n");
 						fileExplorer.SetColor(7, 0);
 					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
 					fileExplorer.enter();
 
 					system("cls");
 					fileExplorer.getPath(p);
+				
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
@@ -202,6 +228,14 @@ void Console::work()
 						wprintf(L"\n");
 						fileExplorer.SetColor(7, 0);
 					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
 					system("cls");
@@ -210,6 +244,7 @@ void Console::work()
 				
 					system("cls");
 					fileExplorer.getPath(p);
+					
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
@@ -220,6 +255,14 @@ void Console::work()
 						wprintf(L"\n");
 						fileExplorer.SetColor(7, 0);
 					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					system("cls");
@@ -229,6 +272,7 @@ void Console::work()
 
 					system("cls");
 					fileExplorer.getPath(p);
+					
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
@@ -239,6 +283,14 @@ void Console::work()
 						wprintf(L"\n");
 						fileExplorer.SetColor(7, 0);
 					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete";
 				}
 			}
 		}
