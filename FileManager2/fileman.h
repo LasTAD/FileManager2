@@ -6,8 +6,10 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
-#include <Windows.h>
-#include <cstdio>                      
+#include <Windows.h> 
+#include <stdio.h>
+
+
 
 
 using namespace std;

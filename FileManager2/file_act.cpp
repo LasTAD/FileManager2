@@ -2,15 +2,19 @@
 using namespace std;
 
 
-void FileCopy::StartCopy(wstring &srcPath)
+void FileCopy::StartCopy(wstring &srcPath, bool isDir)
 {
 	Console consoleCopy;
-	wstring resPath;
 	consoleCopy.showCursor();
-	wcout << "Input path to pasred file: ";
-	wcin >> resPath;
-	_CopyFile(srcPath, resPath);
-	updateView(); //не делает то, что я хочу
+	if (isDir) {
+
+	}
+	else {
+		wstring resPath;
+		wcout << "Input path to pasted file: ";
+		wcin >> resPath;
+		_CopyFile(srcPath, resPath);
+	}
 }
 
 void FileCopy::_CopyFile(wstring &src, wstring &res)
@@ -48,17 +52,18 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 	_fcloseall();
 }
 
-void FileCopy::CreateDir(wstring &)
+int FileCopy::CreateDir(wstring &path)
 {
-
+	if (!CreateDirectoryW(path.c_str(),NULL)) {
+		MessageBox(NULL, L"Unable to create directory!", L"Error", 0);
+	}
 }
 
 
 void FileDel::DelFile(wstring &fName)
 {
-	
 	if (!DeleteFileW(fName.c_str()))
 	{
-		printf("DeleteFile failed (%d)\n", GetLastError());
+		MessageBox(NULL, L"Unable to delete file!", L"Error", 0);
 	}
 }

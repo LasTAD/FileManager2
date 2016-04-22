@@ -2,14 +2,14 @@
 #include "fileman.h"
 using namespace std;
 
-class FileCopy : public FileExplorer {
+class FileCopy {
 	
 public:
 	
-	void StartCopy(wstring &);
+	void StartCopy(wstring &, bool);
 private:
 	void _CopyFile(wstring &, wstring &);
-	void CreateDir(wstring &);
+	int CreateDir(wstring &);
 };
 
 class FileDel {
