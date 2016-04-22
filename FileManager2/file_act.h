@@ -6,6 +6,7 @@ class FileCopy {
 	
 public:
 	FileExplorer fileEx;
+	Console consoleCopy;
 	void StartCopy(wstring &, bool);
 private:
 	void _CopyFile(wstring &, wstring &);
@@ -16,4 +17,5 @@ private:
 class FileDel {
 public:
 	void DelFile(wstring &);
+	void ChName(wstring &);
 };

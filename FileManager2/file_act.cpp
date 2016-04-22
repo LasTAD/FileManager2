@@ -4,7 +4,6 @@ using namespace std;
 
 void FileCopy::StartCopy(wstring &srcPath, bool isDir) 
 {
-	Console consoleCopy;
 	consoleCopy.showCursor();
 	wstring resPath;
 	wcout << "Input path to paste: ";
@@ -78,4 +77,13 @@ void FileDel::DelFile(wstring &fName)
 	{
 		MessageBox(NULL, L"Unable to delete file!", L"Error", 0);
 	}
+}
+
+void FileDel::ChName(wstring &oldName)
+{
+	wstring newName;
+	wcout << "Input new name: ";
+	wcin >> newName;
+	if(_wrename(oldName.c_str(), newName.c_str()))
+		MessageBox(NULL, L"Unable to rename file!", L"Error", 0);
 }

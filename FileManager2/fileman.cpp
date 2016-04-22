@@ -156,7 +156,11 @@ void Console::work()
 	fileExplorer.SetColor(15, 3);
 	wcout << "F3";
 	fileExplorer.SetColor(7, 0);
-	wcout<<"Delete";
+	wcout << "Delete\t";
+	fileExplorer.SetColor(15, 3);
+	wcout << "F4";
+	fileExplorer.SetColor(7, 0);
+	wcout << "Change name";
 
 
 	HANDLE _hin = GetStdHandle(STD_INPUT_HANDLE);
@@ -186,7 +190,11 @@ void Console::work()
 					fileExplorer.SetColor(15, 3);
 					wcout << "F3";
 					fileExplorer.SetColor(7, 0);
-					wcout << "Delete";
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_DOWN) {
 					fileExplorer.down();
@@ -210,7 +218,11 @@ void Console::work()
 					fileExplorer.SetColor(15, 3);
 					wcout << "F3";
 					fileExplorer.SetColor(7, 0);
-					wcout << "Delete";
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
 					fileExplorer.enter();
@@ -235,7 +247,11 @@ void Console::work()
 					fileExplorer.SetColor(15, 3);
 					wcout << "F3";
 					fileExplorer.SetColor(7, 0);
-					wcout << "Delete";
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
 					system("cls");
@@ -262,10 +278,13 @@ void Console::work()
 					fileExplorer.SetColor(15, 3);
 					wcout << "F3";
 					fileExplorer.SetColor(7, 0);
-					wcout << "Delete";
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
-					system("cls");
 					int i = fileExplorer.currentPos;
 
 					filedel.DelFile(fileExplorer.fileList[i].fullname);
@@ -290,7 +309,43 @@ void Console::work()
 					fileExplorer.SetColor(15, 3);
 					wcout << "F3";
 					fileExplorer.SetColor(7, 0);
-					wcout << "Delete";
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
+				}
+				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F4) {
+					system("cls");
+					int i = fileExplorer.currentPos;
+
+					filedel.ChName(fileExplorer.fileList[i].fullname);
+
+					system("cls");
+					fileExplorer.getPath(p);
+
+					wcout << "Current dir: " << p << endl;
+					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
+						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
+						wprintf(fileExplorer.fileList[i].name.c_str());
+						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
+					}
+					fileExplorer.SetColor(15, 3);
+					wcout << "F2";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Copy\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F3";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Delete\t";
+					fileExplorer.SetColor(15, 3);
+					wcout << "F4";
+					fileExplorer.SetColor(7, 0);
+					wcout << "Change name";
 				}
 			}
 		}
