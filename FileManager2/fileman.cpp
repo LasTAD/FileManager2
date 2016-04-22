@@ -187,7 +187,7 @@ void Console::work()
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
 					system("cls");
 					int i = fileExplorer.currentPos;
-					filecopy.StartCopy(fileExplorer.fileList[i].fullname);
+					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].isDir);
 				
 					system("cls");
 					fileExplorer.getPath(p);

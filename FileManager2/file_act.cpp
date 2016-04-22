@@ -2,19 +2,18 @@
 using namespace std;
 
 
-void FileCopy::StartCopy(wstring &srcPath, bool isDir)
+void FileCopy::StartCopy(wstring &srcPath, bool isDir) 
 {
 	Console consoleCopy;
 	consoleCopy.showCursor();
-	if (isDir) {
-
-	}
-	else {
-		wstring resPath;
-		wcout << "Input path to pasted file: ";
-		wcin >> resPath;
+	wstring resPath;
+	wcout << "Input path to paste: ";
+	wcin >> resPath;
+	if (!isDir) {
 		_CopyFile(srcPath, resPath);
 	}
+	else
+		_Copy(srcPath, resPath);
 }
 
 void FileCopy::_CopyFile(wstring &src, wstring &res)
@@ -52,10 +51,23 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 	_fcloseall();
 }
 
-int FileCopy::CreateDir(wstring &path)
+void FileCopy::CreateDir(wstring &path)
 {
 	if (!CreateDirectoryW(path.c_str(),NULL)) {
 		MessageBox(NULL, L"Unable to create directory!", L"Error", 0);
+	}
+}
+
+void FileCopy::_Copy(wstring &src, wstring &res)
+{
+	for (int i = fileEx.first; i <= fileEx.last; i++) {
+		if (fileEx.fileList[i].isDir) {
+			CreateDir(res += fileEx.fileList[i].name);
+			_Copy(src+= fileEx.fileList[i].name, res += fileEx.fileList[i].name);
+		}
+		else {
+			_CopyFile(src += fileEx.fileList[i].name, res += fileEx.fileList[i].name);
+		}
 	}
 }
 
