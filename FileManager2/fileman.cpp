@@ -83,6 +83,12 @@ void FileExplorer::enter()
 	}
 }
 
+void FileExplorer::SetColor(int text, int background)
+{
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hStdOut, (WORD)((background << 4) | text));
+}
+
 void FileExplorer::getPath(wstring &pathString)
 {
 	wstringstream wss;
@@ -137,7 +143,11 @@ void Console::work()
 	fileExplorer.getPath(p);
 	wcout << "Current dir: " << p << endl;
 	for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
-		wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
+		if (i == fileExplorer.currentPos) {
+			fileExplorer.SetColor(15, 1);
+		}
+		  wcout << fileExplorer.fileList[i].name << endl; 
+		  fileExplorer.SetColor(7, 0);
 	}
 
 	HANDLE _hin = GetStdHandle(STD_INPUT_HANDLE);
@@ -153,9 +163,12 @@ void Console::work()
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
-						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
 						wprintf(fileExplorer.fileList[i].name.c_str());
 						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
 					}
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_DOWN) {
@@ -166,9 +179,12 @@ void Console::work()
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
-						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
 						wprintf(fileExplorer.fileList[i].name.c_str());
 						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
 					}
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
@@ -179,9 +195,12 @@ void Console::work()
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
-						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
 						wprintf(fileExplorer.fileList[i].name.c_str());
 						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
 					}
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
@@ -194,9 +213,12 @@ void Console::work()
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
-						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
 						wprintf(fileExplorer.fileList[i].name.c_str());
 						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
 					}
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
@@ -210,9 +232,12 @@ void Console::work()
 					wcout << "Current dir: " << p << endl;
 					for (int i = fileExplorer.first; i <= fileExplorer.last; i++) {
 						//wcout << (i == fileExplorer.currentPos ? "> " : "  ") << fileExplorer.fileList[i].name << endl;
-						wprintf((i == fileExplorer.currentPos ? L"> " : L"  "));
+						if (i == fileExplorer.currentPos) {
+							fileExplorer.SetColor(15, 1);
+						}
 						wprintf(fileExplorer.fileList[i].name.c_str());
 						wprintf(L"\n");
+						fileExplorer.SetColor(7, 0);
 					}
 				}
 			}

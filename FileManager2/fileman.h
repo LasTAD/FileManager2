@@ -28,6 +28,7 @@ public:
 	void			down();
 	void			up();
 	void			enter();
+	void			SetColor(int, int);
 protected:
 	inline void		updateView();
 };
