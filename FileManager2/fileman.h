@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <sstream>
 #include <Windows.h>
+#include <cstdio>                      
+
 
 using namespace std;
 

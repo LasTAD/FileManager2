@@ -1,19 +1,19 @@
 #include "file_act.h"
 using namespace std;
 
+
 void FileCopy::StartCopy(wstring &srcPath)
 {
 	Console consoleCopy;
-	
 	wstring resPath;
-	consoleCopy.hideCursor();
+	consoleCopy.showCursor();
 	wcout << "Input path to pasred file: ";
 	wcin >> resPath;
-	Copy(srcPath, resPath);
+	_CopyFile(srcPath, resPath);
 	updateView(); //не делает то, что я хочу
 }
 
-void FileCopy::Copy(wstring &src, wstring &res)
+void FileCopy::_CopyFile(wstring &src, wstring &res)
 {
 	errno_t err;
 	FILE *fileSrc, *fileRes;
@@ -46,4 +46,19 @@ void FileCopy::Copy(wstring &src, wstring &res)
 	fwrite(buffer, rem, sizeof(char), fileRes);
 	delete[] buffer;
 	_fcloseall();
+}
+
+void FileCopy::CreateDir(wstring &)
+{
+
+}
+
+
+void FileDel::DelFile(wstring &fName)
+{
+	
+	if (!DeleteFileW(fName.c_str()))
+	{
+		printf("DeleteFile failed (%d)\n", GetLastError());
+	}
 }
