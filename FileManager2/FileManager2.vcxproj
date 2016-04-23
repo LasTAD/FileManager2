@@ -149,6 +149,7 @@
     <ClCompile Include="fileman.cpp" />
     <ClCompile Include="file_act.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="other.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileman.h" />

@@ -111,6 +111,19 @@ inline void FileExplorer::updateView()
 	}
 }
 
+Console::Console()
+{
+	// Запомним хэндлы
+	hstdin = GetStdHandle(STD_INPUT_HANDLE);
+	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	// Установим размер окна
+	COORD size{ CONSOLE_SIZE_X, CONSOLE_SIZE_Y };
+	SMALL_RECT rect{ 0, 0, CONSOLE_SIZE_X-1, CONSOLE_SIZE_Y-1 };
+	SetConsoleScreenBufferSize(hstdout, size);
+	SetConsoleWindowInfo(hstdout, true, &rect);
+	SetConsoleTitleW(L"Файловый менеджер");
+}
+
 void Console::hideCursor()
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -131,8 +144,6 @@ void Console::work()
 {
 	FileCopy filecopy;
 	FileDel filedel;
-	hstdin = GetStdHandle(STD_INPUT_HANDLE);
-	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	hideCursor();
 	fileExplorer.parsePath();
 

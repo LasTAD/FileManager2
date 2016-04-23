@@ -1,6 +1,9 @@
 #pragma once
+
 #include <iostream>
 #include <Windows.h>
+#include <vector>
+#include <sstream>
 
 struct File {
 	std::wstring	name;
@@ -9,6 +12,8 @@ struct File {
 	bool			isDir;
 	bool			modifier = false;
 };
+
+typedef File* PFile;
 
 enum ConsoleColor {
 	Black = 0,
@@ -28,3 +33,11 @@ enum ConsoleColor {
 	Yellow = 14,
 	White = 15
 };
+
+// Функция выводит сообщение об ошибке
+void ErrorMessage(wchar_t*);
+void ErrorMessage(std::wstring&);
+
+// Функция для поиска файлов, возвращает 0 в случае успеха
+int GetFileList(wchar_t*, std::vector<PWIN32_FIND_DATAW>&);
+int GetFileList(std::wstring, std::vector<PWIN32_FIND_DATAW>&);

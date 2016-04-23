@@ -9,9 +9,6 @@
 #include <Windows.h> 
 #include <stdio.h>
 
-
-
-
 using namespace std;
 
 class FileExplorer {
@@ -33,11 +30,14 @@ protected:
 	inline void		updateView();
 };
 
+#define CONSOLE_SIZE_X 128
+#define CONSOLE_SIZE_Y 40
+
 class Console {
 	HANDLE			hstdout, hstdin;
 	FileExplorer	fileExplorer;
-
 public:
+	Console();
 	void			hideCursor();
 	void			showCursor();
 	void			work();
