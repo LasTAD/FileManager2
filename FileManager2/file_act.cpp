@@ -4,7 +4,6 @@ using namespace std;
 
 void FileCopy::StartCopy(wstring &srcPath, bool isDir) 
 {
-	consoleCopy.showCursor();
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;

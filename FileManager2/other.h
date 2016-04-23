@@ -5,6 +5,8 @@
 #include <vector>
 #include <sstream>
 
+#define  _CRT_SECURE_NO_WARNINGS
+
 struct File {
 	std::wstring	name;
 	std::wstring	fullname;
