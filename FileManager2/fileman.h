@@ -1,6 +1,5 @@
 #pragma once
 #include "other.h"
-#include <iostream>
 #include <vector>
 #include <memory>
 #include <string>
@@ -8,10 +7,9 @@
 #include <sstream>
 #include <Windows.h> 
 #include <stdio.h>
-
-
-
-
+#include <iostream>
+#include <vector>
+#include <conio.h>
 using namespace std;
 
 class FileExplorer {

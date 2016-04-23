@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <Windows.h>
-
+#define  _CRT_SECURE_NO_WARNINGS
 struct File {
 	std::wstring	name;
 	std::wstring	fullname;
