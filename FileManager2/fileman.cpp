@@ -81,7 +81,7 @@ wstring FileExplorer::getPath()
 	return wss.str();
 }
 
-inline void FileExplorer::updateView()
+void FileExplorer::updateView()
 {
 	if (currentPos > last) {
 		last = currentPos;
@@ -124,6 +124,7 @@ void Console::draw()
 	static int e_first, e_last, e_cursorPos;
 	if (e_first == fileExplorer.first && e_last == fileExplorer.last) {
 		if (e_cursorPos != fileExplorer.currentPos) {
+			/*
 			setColor(FWhite | BBlack);
 			setCursorPos(1, e_cursorPos + 3);
 			wcout << crop(fileExplorer.fileList[e_cursorPos].name, 84);
@@ -137,7 +138,22 @@ void Console::draw()
 			setCursorPos(86, fileExplorer.currentPos + 3);
 			wcout << (fileExplorer.fileList[fileExplorer.currentPos].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[fileExplorer.currentPos].size, 20));
 			setCursorPos(107, fileExplorer.currentPos + 3);
-			wcout << crop(fileExplorer.fileList[fileExplorer.currentPos].isDir ? L"directory" : L"file", 20);
+			wcout << crop(fileExplorer.fileList[fileExplorer.currentPos].isDir ? L"directory" : L"file", 20);*/
+			CHAR_INFO ci1[128], ci2[128];
+			SMALL_RECT sr1, sr2;
+			sr1.Left = sr2.Left = 0;
+			sr1.Right = sr2.Right = 128;
+			sr1.Top = sr1.Bottom = e_cursorPos + 3;
+			sr2.Top = sr2.Bottom = fileExplorer.currentPos + 3;
+			ReadConsoleOutputW(hstdout, ci1, { 128,1 }, { 0, 0 }, &sr1);
+			ReadConsoleOutputW(hstdout, ci2, { 128,1 }, { 0, 0 }, &sr2);
+			for (int i = 1; i < 127; i++) {
+				if (i == 85 || i == 106) continue;
+				ci1[i].Attributes = FWhite | BBlack;
+				ci2[i].Attributes = BWhite | FBlack;
+			}
+			WriteConsoleOutputW(hstdout, ci1, { 128,1 }, { 0,0 }, &sr1);
+			WriteConsoleOutputW(hstdout, ci2, { 128,1 }, { 0,0 }, &sr2);
 		}
 	}
 	// стандартная отрисовка эксплорера
@@ -261,12 +277,14 @@ void Console::work()
 					system("cls");
 					int i = fileExplorer.currentPos;
 					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].isDir);
+					drawExplorersBorder();
 					draw();
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					int i = fileExplorer.currentPos;
 
 					filedel.DelFile(fileExplorer.fileList[i].fullname);
+					drawExplorersBorder();
 					draw();
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F4) {
@@ -274,6 +292,7 @@ void Console::work()
 					int i = fileExplorer.currentPos;
 
 					filedel.ChName(fileExplorer.fileList[i].fullname);
+					drawExplorersBorder();
 					draw();
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F5) {
@@ -281,6 +300,7 @@ void Console::work()
 					int i = fileExplorer.currentPos;
 
 					arch.StartArch(fileExplorer.fileList[i].fullname);
+					drawExplorersBorder();
 					draw();
 				}
 			}
