@@ -22,7 +22,7 @@ public:
 	vector<wstring> path;
 	int				currentPos = 0;		// думаю, диапазона int хватит :)
 	int				first, last;
-	int				filesPerPage = 34;
+	int				filesPerPage = 32;
 	vector<File>	fileList;
 	void			parsePath();
 	wstring			getPath();			// возвращает текущую директорию, в которой мы работаем

@@ -112,8 +112,10 @@ void Console::drawExplorersBorder()
 	wcout << c(179) << left << setw(84) << L"Name" << c(179) << setw(20) << L"Size" << c(179) << setw(20) << L"Type" << c(179);
 	wcout << c(195) << l(196, 84) << c(197) << l(196, 20) << c(197) << l(196, 20) << c(180);
 	// Left and right
-	for (int i = 3; i < 38; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
+	for (int i = 3; i < 35; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
 	// Footer
+	wcout << c(195) << l(196, 84) << c(197) << l(196, 20) << c(197) << l(196, 20) << c(180);
+	setCursorPos(0, 36); wcout << c(179); setCursorPos(85, 36); wcout << c(179); setCursorPos(106, 36); wcout << c(179); setCursorPos(127, 36); wcout << c(179);
 	wcout << c(192) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(217);
 	setlocale(2, "rus");
 }
@@ -143,8 +145,8 @@ void Console::draw()
 			SMALL_RECT sr1, sr2;
 			sr1.Left = sr2.Left = 0;
 			sr1.Right = sr2.Right = 128;
-			sr1.Top = sr1.Bottom = e_cursorPos + 3;
-			sr2.Top = sr2.Bottom = fileExplorer.currentPos + 3;
+			sr1.Top = sr1.Bottom = e_cursorPos - fileExplorer.first + 3;
+			sr2.Top = sr2.Bottom = fileExplorer.currentPos - fileExplorer.first + 3;
 			ReadConsoleOutputW(hstdout, ci1, { 128,1 }, { 0, 0 }, &sr1);
 			ReadConsoleOutputW(hstdout, ci2, { 128,1 }, { 0, 0 }, &sr2);
 			for (int i = 1; i < 127; i++) {
@@ -157,7 +159,7 @@ void Console::draw()
 		}
 	}
 	// стандартная отрисовка эксплорера
-	else for (int i = fileExplorer.first, j = 3; j < 38; i++, j++) {
+	else for (int i = fileExplorer.first, j = 3; j < 35; i++, j++) {
 		if (i <= fileExplorer.last) {
 			setCursorPos(1, j);
 			if (i == fileExplorer.currentPos) setColor(FBlack | BWhite); else setColor(FWhite | BBlack);
