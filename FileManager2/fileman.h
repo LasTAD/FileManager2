@@ -13,23 +13,24 @@
 
 using namespace std;
 
+/*  ласс-проводник
+ * Ќуждаетс€ в доработке
+ */
 class FileExplorer {
 	wchar_t			drive = L'C';
 public:
 	vector<wstring> path;
-	UINT32			currentPos = 0;
-	UINT32			first, last;
-	UINT32			filesPerPage = 20;
-	void			parsePath();
-public:
+	int				currentPos = 0;		// думаю, диапазона int хватит :)
+	int				first, last;
+	int				filesPerPage = 34;
 	vector<File>	fileList;
-	void			getPath(wstring &);
-	void			down();
-	void			up();
-	void			enter();
-	void			SetColor(int, int);
+	void			parsePath();
+	wstring			getPath();			// возвращает текущую директорию, в которой мы работаем
+	void			down();				// перемещает курсор вниз
+	void			up();				// меремещает курсор вверх
+	void			enter();			// выполн€т вход в директорию либо открывает файл в HEX-редакторе (TODO)
 protected:
-	inline void		updateView();
+	inline void		updateView();		// пересчитывает количество файлов и обновл€ет позицию курсора
 };
 
 #define CONSOLE_SIZE_X 128
@@ -38,9 +39,13 @@ protected:
 class Console {
 	HANDLE			hstdout, hstdin;
 	FileExplorer	fileExplorer;
+	void			drawExplorersBorder();
+	void			draw();
 public:
 	Console();
 	void			hideCursor();
 	void			showCursor();
 	void			work();
+	void			setColor(int);
+	void			setCursorPos(short, short);
 };

@@ -37,3 +37,66 @@ int GetFileList(std::wstring path, std::vector<PWIN32_FIND_DATAW> &files)
 	FindClose(handle);
 	return 0;
 }
+
+static wchar_t __spaces20[] = L"                    ";
+
+std::wstring l(char c, int length)
+{
+	if (c == ' ' && length == 20) return __spaces20;
+	std::wstringstream wss;
+	for (int i = 0; i < length; i++) {
+		wss << c;
+	}
+	return wss.str();
+}
+
+std::wstring l(char* c, int length)
+{
+	std::wstringstream wss;
+	for (int i = 0; i < length; i++) {
+		wss << c;
+	}
+	return wss.str();
+}
+
+std::wstring l(std::wstring c, int length)
+{
+	std::wstringstream wss;
+	for (int i = 0; i < length; i++) {
+		wss << c;
+	}
+	return wss.str();
+}
+
+char c(int n)
+{
+	return n;
+}
+
+std::wstring crop(std::wstring str, int length)
+{
+	if (str.length() > length) return str.substr(0, length-3) + L"...";
+	if (str.length() < length) return str + l(' ', length - str.length());
+	return str;
+}
+
+std::wstring cropf(std::wstring str, int length)
+{
+	if (str.length() > length) return str.substr(0, length - 3) + L"...";
+	if (str.length() < length) return l(' ', length - str.length()) + str;
+	return str;
+}
+
+std::wstring crop(ULONG64 value, int length)
+{
+	std::wstringstream wss;
+	wss << value << "  B";
+	return crop(wss.str(), length);
+}
+
+std::wstring cropf(ULONG64 value, int length)
+{
+	std::wstringstream wss;
+	wss << value << "  B";
+	return cropf(wss.str(), length);
+}
