@@ -240,7 +240,7 @@ void Console::work()
 
 	drawExplorersBorder();
 	draw();
-	/*
+	
 	while (!WaitForSingleObject(hstdin, INFINITE)) {
 		ReadConsoleInput(hstdin, &pin, 1, &event_count);
 		if (pin.EventType == KEY_EVENT) {
@@ -285,7 +285,8 @@ void Console::work()
 				}
 			}
 		}
-	}*/
+	}
+	/*
 	while (true) {
 		int t = _getch();
 		if (t == 224) {
@@ -301,5 +302,5 @@ void Console::work()
 		}
 		if (t == 27) break;
 		//MessageBoxW(NULL, crop(t, 30).c_str(), L"", 0);
-	}
+	}*/
 }
