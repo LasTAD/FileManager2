@@ -28,6 +28,7 @@ void FileExplorer::parsePath()
 	currentPos = 0;
 	first = 0;
 	last = min(fileList.size() - 1, filesPerPage - 1);
+	page = 0;
 
 	updateView();
 }
@@ -52,6 +53,22 @@ void FileExplorer::up()
 		currentPos = fileList.size() - 1;
 	}
 	updateView();
+}
+
+void FileExplorer::updateView()
+{
+	/*
+	if (currentPos > last) {
+		last = currentPos;
+		first = last - filesPerPage + 1;
+	}
+	else if (currentPos < first) {
+		first = currentPos;
+		last = first + filesPerPage - 1;
+	}*/
+	page = currentPos / filesPerPage;
+	first = filesPerPage * page;
+	last = min(filesPerPage * (page + 1) - 1, fileList.size() - 1);
 }
 
 void FileExplorer::enter()
@@ -79,18 +96,6 @@ wstring FileExplorer::getPath()
 		wss << i << L'\\';
 	}
 	return wss.str();
-}
-
-void FileExplorer::updateView()
-{
-	if (currentPos > last) {
-		last = currentPos;
-		first = last - filesPerPage + 1;
-	}
-	else if (currentPos < first) {
-		first = currentPos;
-		last = first + filesPerPage - 1;
-	}
 }
 
 void Console::setColor(int color)
