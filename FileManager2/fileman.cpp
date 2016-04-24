@@ -4,25 +4,52 @@
 
 void FileExplorer::parsePath()
 {
-	wstring path = getPath() + L"*.*";
-	vector<PWIN32_FIND_DATAW> foundFiles;
-	GetFileList(path, foundFiles);
-	// check error
 	fileList.clear();
-	File dotdot;
-	dotdot.fullname = L"..";
-	dotdot.isDir = true;
-	dotdot.name = L"..";
-	dotdot.modifier = true;
-	fileList.push_back(dotdot);
-	for (auto f : foundFiles) {
-		File file;
-		file.name = f->cFileName;
-		file.fullname = path + f->cFileName;
-		file.size = (f->nFileSizeHigh * MAXDWORD) + f->nFileSizeLow;
-		file.isDir = (bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-		fileList.push_back(file);
-		delete f;
+	if (path.size() == 0) {
+		wchar_t drives[128];
+		DWORD count = GetLogicalDriveStringsW(128, drives);
+		for (DWORD i = 0; i < count; i += 4) {
+			File file;
+			file.name = drives[i];
+			file.fullname = drives[i];
+			file.isDrive = true;
+			file.isDir = false;
+			
+			ULARGE_INTEGER FreeBytesAvailable;
+			ULARGE_INTEGER TotalNumberOfBytes;
+			ULARGE_INTEGER TotalNumberOfFreeBytes;
+			BOOL GetDiskFreeSpaceFlag = GetDiskFreeSpaceExW(
+				&drives[i],									// directory name
+				(PULARGE_INTEGER)&FreeBytesAvailable,		// bytes available to caller
+				(PULARGE_INTEGER)&TotalNumberOfBytes,		// bytes on disk
+				(PULARGE_INTEGER)&TotalNumberOfFreeBytes	// free bytes on disk
+				);
+			if (!GetDiskFreeSpaceFlag) ErrorMessage(L"Can't check disk space");
+			file.size = TotalNumberOfBytes.QuadPart - TotalNumberOfFreeBytes.QuadPart;
+
+			fileList.push_back(file);
+		}
+	}
+	else {
+		wstring path = getPath() + L"*.*";
+		vector<PWIN32_FIND_DATAW> foundFiles;
+		GetFileList(path, foundFiles);
+		// check error
+		File dotdot;
+		dotdot.fullname = L"..";
+		dotdot.isDir = true;
+		dotdot.name = L"..";
+		dotdot.modifier = true;
+		fileList.push_back(dotdot);
+		for (auto f : foundFiles) {
+			File file;
+			file.name = f->cFileName;
+			file.fullname = path + f->cFileName;
+			file.size = (f->nFileSizeHigh * MAXDWORD) + f->nFileSizeLow;
+			file.isDir = (bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+			fileList.push_back(file);
+			delete f;
+		}
 	}
 
 	currentPos = 0;
@@ -82,7 +109,7 @@ void FileExplorer::enter()
 
 		parsePath();
 	}
-	else if (fileList[currentPos].isDir) {
+	else if (fileList[currentPos].isDir || fileList[currentPos].isDrive) {
 		path.push_back(fileList[currentPos].name);
 		parsePath();
 	}
@@ -90,10 +117,11 @@ void FileExplorer::enter()
 
 wstring FileExplorer::getPath()
 {
+	if (path.size() == 0) return L"";
 	wstringstream wss;
-	wss << drive << L":\\";
-	for (auto i : path) {
-		wss << i << L'\\';
+	wss << path[0] << L":\\";
+	for (int i = 1; i < path.size(); i++) {
+		wss << path[i] << L'\\';
 	}
 	return wss.str();
 }
@@ -172,7 +200,7 @@ void Console::draw()
 			setCursorPos(86, j);
 			wcout << (fileExplorer.fileList[i].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
 			setCursorPos(107, j);
-			wcout << crop(fileExplorer.fileList[i].isDir ? L"directory" : L"file", 20);
+			wcout << crop(fileExplorer.fileList[i].isDir ? L"directory" : (fileExplorer.fileList[i].isDrive ? L"drive" : L"file"), 20);
 		}
 		else {
 			setColor(FWhite | BBlack);

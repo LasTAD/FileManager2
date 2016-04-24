@@ -17,7 +17,6 @@ using namespace std;
  * Ќуждаетс€ в доработке
  */
 class FileExplorer {
-	wchar_t			drive = L'C';
 public:
 	vector<wstring> path;
 	int				currentPos = 0;		// думаю, диапазона int хватит :)
