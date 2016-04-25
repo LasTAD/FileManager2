@@ -11,13 +11,19 @@ struct File {
 	std::wstring	name;
 	std::wstring	fullname;
 	ULONG64			size;
-	bool			isDir;
-	bool			isDrive	 = false;
+	int				fAttr;
+	enum			FAttributes;
+	//bool			isDrive	 = false;
 	bool			modifier = false;
 };
 
 typedef File* PFile;
-
+enum FAttributes {
+	DRIVE = 1,
+	DOTDOT = 2,
+	DIR = 3,
+	FIL = 0
+};
 enum ConsoleColor
 {
 	FBlack = 0,

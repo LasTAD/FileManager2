@@ -2,15 +2,15 @@
 using namespace std;
 
 
-void FileCopy::StartCopy(wstring &srcPath, bool isDir) 
+void FileCopy::StartCopy(wstring &srcPath, int isDir) 
 {
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;
 	
-	if (!isDir)
+	if (isDir==FIL)
 		_CopyFile(srcPath, resPath);
-	else {
+	else if (isDir==DIR) {
 		size_t pos = srcPath.find_last_of(L'\\', srcPath.length());
 		wstring res1;
 		res1 = srcPath.substr(pos + 1, srcPath.length() - pos - 1);
@@ -77,11 +77,11 @@ void FileCopy::_Copy(wstring src, wstring res)
 }
 
 
-void FileDel::StartDel(wstring & path, bool isDir)
+void FileDel::StartDel(wstring & path, int isDir)
 {
-	if (!isDir)
+	if (isDir==FIL)
 		DelFile(path);
-	else
+	else if(isDir==DIR)
 		_Del(path);
 }
 

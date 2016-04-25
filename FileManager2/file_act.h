@@ -6,7 +6,7 @@ using namespace std;
 class FileCopy {
 	
 public:
-	void StartCopy(wstring &, bool);
+	void StartCopy(wstring &, int);
 private:
 	void _CopyFile(wstring &, wstring &);
 	void CreateDir(wstring &);
@@ -15,7 +15,7 @@ private:
 
 class FileDel {
 public:
-	void StartDel(wstring &, bool);
+	void StartDel(wstring &, int);
 	void ChName(wstring &);
 private:
 	void DelFile(wstring &);

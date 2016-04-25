@@ -12,8 +12,7 @@ void FileExplorer::parsePath()
 			File file;
 			file.name = drives[i];
 			file.fullname = drives[i];
-			file.isDrive = true;
-			file.isDir = false;
+			file.fAttr = DRIVE;
 			
 			ULARGE_INTEGER FreeBytesAvailable;
 			ULARGE_INTEGER TotalNumberOfBytes;
@@ -37,7 +36,7 @@ void FileExplorer::parsePath()
 		// check error
 		File dotdot;
 		dotdot.fullname = L"..";
-		dotdot.isDir = true;
+		dotdot.fAttr= DOTDOT;
 		dotdot.name = L"..";
 		dotdot.modifier = true;
 		fileList.push_back(dotdot);
@@ -46,7 +45,10 @@ void FileExplorer::parsePath()
 			file.name = f->cFileName;
 			file.fullname = path + f->cFileName;
 			file.size = (f->nFileSizeHigh * MAXDWORD) + f->nFileSizeLow;
-			file.isDir = (bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+			if ((bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				file.fAttr = DIR;
+			else 
+				file.fAttr = FIL;
 			fileList.push_back(file);
 			delete f;
 		}
@@ -100,7 +102,7 @@ void FileExplorer::enter()
 
 		parsePath();
 	}
-	else if (fileList[currentPos].isDir || fileList[currentPos].isDrive) {
+	else if (fileList[currentPos].fAttr==DIR || fileList[currentPos].fAttr==DRIVE) {
 		path.push_back(fileList[currentPos].name);
 		parsePath();
 	}
@@ -177,9 +179,9 @@ void Console::draw()
 			if (i == fileExplorer.currentPos) setColor(FBlack | BWhite); else setColor(FWhite | BBlack);
 			wcout << crop(fileExplorer.fileList[i].name, 84);
 			setCursorPos(86, j);
-			wcout << (fileExplorer.fileList[i].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
+			wcout << (fileExplorer.fileList[i].fAttr ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
 			setCursorPos(107, j);
-			wcout << crop(fileExplorer.fileList[i].isDir ? L"Directory" : (fileExplorer.fileList[i].isDrive ? L"Drive" : L"File"), 20);
+			wcout << crop(fileExplorer.fileList[i].fAttr==DIR ? L"Directory" : (fileExplorer.fileList[i].fAttr==DRIVE ? L"Drive" :(fileExplorer.fileList[i].fAttr == DOTDOT ? L"": L"File")), 20);
 		}
 		else {
 			setColor(FWhite | BBlack);
@@ -289,14 +291,14 @@ void Console::work()
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F2) {
 					system("cls");
 					int i = fileExplorer.currentPos;
-					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].isDir);
+					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
 					draw();
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					int i = fileExplorer.currentPos;
 
-					filedel.StartDel(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].isDir);
+					filedel.StartDel(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
 					draw();
 				}
