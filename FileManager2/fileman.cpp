@@ -200,7 +200,7 @@ void Console::draw()
 			setCursorPos(86, j);
 			wcout << (fileExplorer.fileList[i].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
 			setCursorPos(107, j);
-			wcout << crop(fileExplorer.fileList[i].isDir ? L"directory" : (fileExplorer.fileList[i].isDrive ? L"drive" : L"file"), 20);
+			wcout << crop(fileExplorer.fileList[i].isDir ? L"Directory" : (fileExplorer.fileList[i].isDrive ? L"Drive" : L"File"), 20);
 		}
 		else {
 			setColor(FWhite | BBlack);

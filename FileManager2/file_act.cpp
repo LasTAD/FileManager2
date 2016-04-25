@@ -20,12 +20,12 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 	FILE *fileSrc, *fileRes;
 	err = _wfopen_s(&fileSrc, src.c_str(), L"r+b");
 	if (err) {
-		MessageBox(NULL, L"Unable to open requested file!", L"Error", 0);
+		ErrorMessage(L"Unable to open requested file!");
 		return;
 	}
 	err = _wfopen_s(&fileRes, res.c_str(), L"w+b");
 	if (err) {
-		MessageBox(NULL, L"Unable to create new file!", L"Error", 0);
+		ErrorMessage(L"Unable to create new file!");
 		return;
 	}
 	unsigned int fsize, n;
@@ -52,7 +52,7 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 void FileCopy::CreateDir(wstring &path)
 {
 	if (!CreateDirectoryW(path.c_str(),NULL)) {
-		MessageBox(NULL, L"Unable to create directory!", L"Error", 0);
+		ErrorMessage(L"Unable to create directory!");
 	}
 }
 
@@ -74,7 +74,7 @@ void FileDel::DelFile(wstring &fName)
 {
 	if (!DeleteFileW(fName.c_str()))
 	{
-		MessageBox(NULL, L"Unable to delete file!", L"Error", 0);
+		ErrorMessage(L"Unable to delete file!");
 	}
 }
 
@@ -84,5 +84,5 @@ void FileDel::ChName(wstring &oldName)
 	wcout << "Input new name: ";
 	wcin >> newName;
 	if(_wrename(oldName.c_str(), newName.c_str()))
-		MessageBox(NULL, L"Unable to rename file!", L"Error", 0);
+		ErrorMessage(L"Unable to rename file!");
 }
