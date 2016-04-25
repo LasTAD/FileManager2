@@ -7,11 +7,17 @@ void FileCopy::StartCopy(wstring &srcPath, bool isDir)
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;
+	
 	if (!isDir) {
 		_CopyFile(srcPath, resPath);
 	}
-	else
-		_Copy(srcPath, resPath);
+	else {
+		size_t pos = srcPath.find_last_of(L'\\', srcPath.length());
+		wstring res1;
+		res1 = srcPath.substr(pos + 1, srcPath.length() - pos - 1);
+		CreateDir(resPath + L'\\' + res1);
+		_Copy(srcPath, resPath + L'\\' + res1);
+	}
 }
 
 void FileCopy::_CopyFile(wstring &src, wstring &res)
@@ -59,10 +65,7 @@ void FileCopy::CreateDir(wstring &path)
 void FileCopy::_Copy(wstring src, wstring res)
 {
 	vector<PWIN32_FIND_DATAW> dirFiles;
-	size_t pos = src.find_last_of(L'\\', src.length());
-	//wstring res1;
-	//res1 = src.substr(pos + 1, src.length() - pos - 1);
-	//CreateDir(res+L'\\'+res1);
+	
 	GetFileList(src + L'\\',dirFiles);
 	for (int i = 0; i < dirFiles.size(); i++) {
 		if ((bool)(dirFiles[i]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
