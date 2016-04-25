@@ -58,18 +58,20 @@ void FileCopy::CreateDir(wstring &path)
 
 void FileCopy::_Copy(wstring src, wstring res)
 {
+	vector<PWIN32_FIND_DATAW> dirFiles;
 	size_t pos = src.find_last_of(L'\\', src.length());
 	wstring res1;
 	res1 = src.substr(pos + 1, src.length() - pos - 1);
-	CreateDir(res1);
+	CreateDir(res+L'\\'+res1);
 	GetFileList(src.substr(0,src.size()-1),dirFiles);
 	for (int i = 0; i <= dirFiles.size(); i++) {
-		if (dirFiles[i]->dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY) {
-			CreateDir(res + dirFiles[i]->cFileName);
-			_Copy(src + dirFiles[i]->cFileName, res + dirFiles[i]->cFileName);
+		if ((bool)dirFiles[i]->dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY) {
+			CreateDir(res + L'\\'+ dirFiles[i]->cFileName);
+			_Copy(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
 		}
 		else
-			_CopyFile(src + dirFiles[i]->cFileName, res + dirFiles[i]->cFileName);
+			_CopyFile(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
+		delete dirFiles[i];
 	}
 	//for (int i = fileEx.first; i <= fileEx.last; i++) {
 	//	if (fileEx.fileList[i].isDir) {
