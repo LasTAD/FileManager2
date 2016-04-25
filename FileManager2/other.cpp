@@ -20,7 +20,7 @@ int GetFileList(wchar_t *path, std::vector<PWIN32_FIND_DATAW> &files)
 int GetFileList(std::wstring path, std::vector<PWIN32_FIND_DATAW> &files)
 {
 	PWIN32_FIND_DATAW data = new WIN32_FIND_DATAW;
-	HANDLE handle = FindFirstFileW((path += L"*.*").c_str(), data);
+	HANDLE handle = FindFirstFileW((path + L"*.*").c_str(), data);
 	if (handle == INVALID_HANDLE_VALUE) {
 		std::wstringstream wss;
 		wss << L"GetFileList: invalid handle, error code = " << GetLastError();

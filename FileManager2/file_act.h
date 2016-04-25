@@ -11,7 +11,7 @@ private:
 	vector<PWIN32_FIND_DATAW> dirFiles;
 	void _CopyFile(wstring &, wstring &);
 	void CreateDir(wstring &);
-	void _Copy(wstring &, wstring&);
+	void _Copy(wstring , wstring);
 };
 
 //class FileDel {

@@ -31,7 +31,7 @@ void FileExplorer::parsePath()
 		}
 	}
 	else {
-		wstring path = getPath() + L"*.*";
+		wstring path = getPath();
 		vector<PWIN32_FIND_DATAW> foundFiles;
 		GetFileList(path, foundFiles);
 		// check error

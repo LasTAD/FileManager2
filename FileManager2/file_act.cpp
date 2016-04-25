@@ -56,13 +56,12 @@ void FileCopy::CreateDir(wstring &path)
 	}
 }
 
-void FileCopy::_Copy(wstring &src, wstring &res)
+void FileCopy::_Copy(wstring src, wstring res)
 {
 	size_t pos = src.find_last_of(L'\\', src.length());
-	wstring res1=src;
-	res1.substr(pos + 1, src.length() - pos - 1);
-	res += res1;
-	CreateDir(res);
+	wstring res1;
+	res1 = src.substr(pos + 1, src.length() - pos - 1);
+	CreateDir(res1);
 	GetFileList(src.substr(0,src.size()-1),dirFiles);
 	for (int i = 0; i <= dirFiles.size(); i++) {
 		if (dirFiles[i]->dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY) {
