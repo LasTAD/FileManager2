@@ -146,6 +146,9 @@ void Console::drawExplorersBorder()
 
 void Console::draw()
 {
+	setCursorPos(1, 36);
+	setColor(FWhite | BBlack);
+	wcout << cropt(fileExplorer.getPath(), 126);
 	// а здесь будет страшная дичь
 	static int e_first, e_last, e_cursorPos, path_size;
 	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size()) {
@@ -188,9 +191,7 @@ void Console::draw()
 			wcout << l(' ', 20);
 		}
 	}
-	setCursorPos(1, 36);
-	setColor(FWhite | BBlack);
-	wcout << cropt(fileExplorer.getPath(), 126);
+	
 	e_first = fileExplorer.first;
 	e_last = fileExplorer.last;
 	e_cursorPos = fileExplorer.currentPos;
@@ -261,9 +262,6 @@ void Console::work()
 	FileCopy filecopy;
 	FileDel filedel;
 	Archive arch;
-	hstdin = GetStdHandle(STD_INPUT_HANDLE);
-	hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	hideCursor();
 	fileExplorer.parsePath();
 
 	INPUT_RECORD pin;
@@ -273,7 +271,7 @@ void Console::work()
 	draw();
 	
 	while (!WaitForSingleObject(hstdin, INFINITE)) {
-		ReadConsoleInput(hstdin, &pin, 1, &event_count);
+		ReadConsoleInputW(hstdin, &pin, 1, &event_count);
 		if (pin.EventType == KEY_EVENT) {
 			if (pin.Event.KeyEvent.bKeyDown) {
 				if (pin.Event.KeyEvent.wVirtualKeyCode == VK_UP) {
@@ -321,21 +319,4 @@ void Console::work()
 			}
 		}
 	}
-	/*
-	while (true) {
-		int t = _getch();
-		if (t == 224) {
-			t = _getch();
-			if (t == 72) {
-				fileExplorer.up();
-				draw();
-			}
-			if (t == 80) {
-				fileExplorer.down();
-				draw();
-			}
-		}
-		if (t == 27) break;
-		//MessageBoxW(NULL, crop(t, 30).c_str(), L"", 0);
-	}*/
 }
