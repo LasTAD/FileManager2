@@ -12,7 +12,6 @@ struct File {
 	std::wstring	fullname;
 	ULONG64			size;
 	int				fAttr;
-	enum			FAttributes;
 };
 
 typedef File* PFile;
