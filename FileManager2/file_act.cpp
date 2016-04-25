@@ -58,31 +58,63 @@ void FileCopy::CreateDir(wstring &path)
 
 void FileCopy::_Copy(wstring &src, wstring &res)
 {
-	for (int i = fileEx.first; i <= fileEx.last; i++) {
-		if (fileEx.fileList[i].isDir) {
-			CreateDir(res += fileEx.fileList[i].name);
-			_Copy(src+= fileEx.fileList[i].name, res += fileEx.fileList[i].name);
+	size_t pos = src.find_last_of(L'\\', src.length());
+	wstring res1=src;
+	res1.substr(pos + 1, src.length() - pos - 1);
+	res += res1;
+	CreateDir(res);
+	GetFileList(src.substr(0,src.size()-1),dirFiles);
+	for (int i = 0; i <= dirFiles.size(); i++) {
+		if (dirFiles[i]->dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY) {
+			CreateDir(res + dirFiles[i]->cFileName);
+			_Copy(src + dirFiles[i]->cFileName, res + dirFiles[i]->cFileName);
 		}
-		else {
-			_CopyFile(src += fileEx.fileList[i].name, res += fileEx.fileList[i].name);
-		}
+		else
+			_CopyFile(src + dirFiles[i]->cFileName, res + dirFiles[i]->cFileName);
 	}
+	//for (int i = fileEx.first; i <= fileEx.last; i++) {
+	//	if (fileEx.fileList[i].isDir) {
+	//		CreateDir(res += fileEx.fileList[i].name);
+	//		_Copy(src+= fileEx.fileList[i].name, res += fileEx.fileList[i].name);
+	//	}
+	//	else {
+	//		_CopyFile(src += fileEx.fileList[i].name, res += fileEx.fileList[i].name);
+	//	}
+	//}
 }
 
 
-void FileDel::DelFile(wstring &fName)
-{
-	if (!DeleteFileW(fName.c_str()))
-	{
-		ErrorMessage(L"Unable to delete file!");
-	}
-}
-
-void FileDel::ChName(wstring &oldName)
-{
-	wstring newName;
-	wcout << "Input new name: ";
-	wcin >> newName;
-	if(_wrename(oldName.c_str(), newName.c_str()))
-		ErrorMessage(L"Unable to rename file!");
-}
+//void FileDel::DelFile(wstring &fName)
+//{
+//	if (!DeleteFileW(fName.c_str()))
+//	{
+//		ErrorMessage(L"Unable to delete file!");
+//	}
+//}
+//
+//void FileDel::Del(wstring & path, bool isDir)
+//{
+//	
+//	if (!isDir) {
+//		DelFile(path);
+//	}
+//	else
+//		;
+//}
+//
+//void FileDel::ChName(wstring &oldName)
+//{
+//	wstring newName;
+//	wcout << "Input new name: ";
+//	wcin >> newName;
+//	if(_wrename(oldName.c_str(), newName.c_str()))
+//		ErrorMessage(L"Unable to rename file or directory!");
+//}
+//
+//void FileDel::DelFile(wstring &)
+//{
+//}
+//
+//void FileDel::DelDir(wstring &, wstring &)
+//{
+//}
