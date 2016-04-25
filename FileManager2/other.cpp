@@ -87,6 +87,13 @@ std::wstring cropf(std::wstring str, int length)
 	return str;
 }
 
+std::wstring cropt(std::wstring str, int length)
+{
+	if (str.length() > length) return L"..." + str.substr(0, length - 3);
+	if (str.length() < length) return str + l(' ', length - str.length());
+	return str;
+}
+
 std::wstring crop(ULONG64 value, int length)
 {
 	std::wstringstream wss;

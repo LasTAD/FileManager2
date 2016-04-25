@@ -84,15 +84,6 @@ void FileExplorer::up()
 
 void FileExplorer::updateView()
 {
-	/*
-	if (currentPos > last) {
-		last = currentPos;
-		first = last - filesPerPage + 1;
-	}
-	else if (currentPos < first) {
-		first = currentPos;
-		last = first + filesPerPage - 1;
-	}*/
 	page = currentPos / filesPerPage;
 	first = filesPerPage * page;
 	last = min(filesPerPage * (page + 1) - 1, fileList.size() - 1);
@@ -147,33 +138,18 @@ void Console::drawExplorersBorder()
 	// Left and right
 	for (int i = 3; i < 35; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
 	// Footer
-	wcout << c(195) << l(196, 84) << c(197) << l(196, 20) << c(197) << l(196, 20) << c(180);
-	setCursorPos(0, 36); wcout << c(179); setCursorPos(85, 36); wcout << c(179); setCursorPos(106, 36); wcout << c(179); setCursorPos(127, 36); wcout << c(179);
-	wcout << c(192) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(217);
+	wcout << c(195) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(180);
+	wcout << c(179) << l(' ', 126) << c(179);
+	wcout << c(192) << l(196, 126) << c(217);
 	setlocale(2, "rus");
 }
 
 void Console::draw()
 {
 	// а здесь будет страшная дичь
-	static int e_first, e_last, e_cursorPos;
-	if (e_first == fileExplorer.first && e_last == fileExplorer.last) {
+	static int e_first, e_last, e_cursorPos, path_size;
+	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size()) {
 		if (e_cursorPos != fileExplorer.currentPos) {
-			/*
-			setColor(FWhite | BBlack);
-			setCursorPos(1, e_cursorPos + 3);
-			wcout << crop(fileExplorer.fileList[e_cursorPos].name, 84);
-			setCursorPos(86, e_cursorPos + 3);
-			wcout << (fileExplorer.fileList[e_cursorPos].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[e_cursorPos].size, 20));
-			setCursorPos(107, e_cursorPos + 3);
-			wcout << crop(fileExplorer.fileList[e_cursorPos].isDir ? L"directory" : L"file", 20);
-			setColor(FBlack | BWhite);
-			setCursorPos(1, fileExplorer.currentPos + 3);
-			wcout << crop(fileExplorer.fileList[fileExplorer.currentPos].name, 84);
-			setCursorPos(86, fileExplorer.currentPos + 3);
-			wcout << (fileExplorer.fileList[fileExplorer.currentPos].isDir ? l(' ', 20) : cropf(fileExplorer.fileList[fileExplorer.currentPos].size, 20));
-			setCursorPos(107, fileExplorer.currentPos + 3);
-			wcout << crop(fileExplorer.fileList[fileExplorer.currentPos].isDir ? L"directory" : L"file", 20);*/
 			CHAR_INFO ci1[128], ci2[128];
 			SMALL_RECT sr1, sr2;
 			sr1.Left = sr2.Left = 0;
@@ -212,9 +188,13 @@ void Console::draw()
 			wcout << l(' ', 20);
 		}
 	}
+	setCursorPos(1, 36);
+	setColor(FWhite | BBlack);
+	wcout << cropt(fileExplorer.getPath(), 126);
 	e_first = fileExplorer.first;
 	e_last = fileExplorer.last;
 	e_cursorPos = fileExplorer.currentPos;
+	path_size = fileExplorer.path.size();
 	/*
 	system("cls");
 	wcout << "Current dir: " << fileExplorer.getPath() << endl;
