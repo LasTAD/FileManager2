@@ -13,11 +13,12 @@ private:
 	void _Copy(wstring , wstring);
 };
 
-//class FileDel {
-//public:
-//	void Del(wstring &, bool);
-//	void ChName(wstring &);
-//private:
-//	void DelFile(wstring &);
-//	void DelDir(wstring &, wstring &);
-//};
+class FileDel {
+public:
+	void StartDel(wstring &, bool);
+	void ChName(wstring &);
+private:
+	void DelFile(wstring &);
+	void DelDir(wstring &);
+	void _Del(wstring);
+};

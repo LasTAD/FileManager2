@@ -260,7 +260,7 @@ void Console::showCursor()
 void Console::work()
 {
 	FileCopy filecopy;
-	//FileDel filedel;
+	FileDel filedel;
 	Archive arch;
 	fileExplorer.parsePath();
 
@@ -296,7 +296,7 @@ void Console::work()
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					int i = fileExplorer.currentPos;
 
-					//filedel.Del(fileExplorer.fileList[i].fullname);
+					filedel.StartDel(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].isDir);
 					drawExplorersBorder();
 					draw();
 				}
@@ -304,7 +304,7 @@ void Console::work()
 					system("cls");
 					int i = fileExplorer.currentPos;
 
-					//filedel.ChName(fileExplorer.fileList[i].fullname);
+					filedel.ChName(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
 					draw();
 				}
