@@ -13,11 +13,10 @@ struct File {
 	ULONG64			size;
 	int				fAttr;
 	enum			FAttributes;
-	//bool			isDrive	 = false;
-	bool			modifier = false;
 };
 
 typedef File* PFile;
+
 enum FAttributes {
 	DRIVE = 1,
 	DOTDOT = 2,

@@ -38,7 +38,6 @@ void FileExplorer::parsePath()
 		dotdot.fullname = L"..";
 		dotdot.fAttr= DOTDOT;
 		dotdot.name = L"..";
-		dotdot.modifier = true;
 		fileList.push_back(dotdot);
 		for (auto f : foundFiles) {
 			File file;
@@ -93,7 +92,7 @@ void FileExplorer::updateView()
 
 void FileExplorer::enter()
 {
-	if (fileList[currentPos].modifier) {
+	if (fileList[currentPos].fAttr==DOTDOT) {
 
 		// TODO: make disks list window
 
