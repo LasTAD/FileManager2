@@ -18,12 +18,12 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 {
 	errno_t err;
 	FILE *fileSrc, *fileRes;
-	err = _wfopen_s(&fileSrc, src.c_str(), L"r+b");
+	err = _wfopen_s(&fileSrc, src.c_str(), L"rb");
 	if (err) {
 		ErrorMessage(L"Unable to open requested file!");
 		return;
 	}
-	err = _wfopen_s(&fileRes, res.c_str(), L"w+b");
+	err = _wfopen_s(&fileRes, res.c_str(), L"wb");
 	if (err) {
 		ErrorMessage(L"Unable to create new file!");
 		return;
@@ -60,13 +60,13 @@ void FileCopy::_Copy(wstring src, wstring res)
 {
 	vector<PWIN32_FIND_DATAW> dirFiles;
 	size_t pos = src.find_last_of(L'\\', src.length());
-	wstring res1;
-	res1 = src.substr(pos + 1, src.length() - pos - 1);
-	CreateDir(res+L'\\'+res1);
-	GetFileList(src.substr(0,src.size()-1),dirFiles);
-	for (int i = 0; i <= dirFiles.size(); i++) {
-		if ((bool)dirFiles[i]->dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY) {
-			CreateDir(res + L'\\'+ dirFiles[i]->cFileName);
+	//wstring res1;
+	//res1 = src.substr(pos + 1, src.length() - pos - 1);
+	//CreateDir(res+L'\\'+res1);
+	GetFileList(src + L'\\',dirFiles);
+	for (int i = 0; i < dirFiles.size(); i++) {
+		if ((bool)(dirFiles[i]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+			CreateDir(res + L'\\' + dirFiles[i]->cFileName);
 			_Copy(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
 		}
 		else
