@@ -2,12 +2,12 @@
 
 void ErrorMessage(wchar_t *text)
 {
-	MessageBox(NULL, text, L"Error message", MB_OK | MB_ICONWARNING);
+	MessageBoxW(NULL, text, L"Error message", MB_OK | MB_ICONWARNING);
 }
 
 void ErrorMessage(std::wstring &text)
 {
-	MessageBox(NULL, text.c_str(), L"Error message", MB_OK | MB_ICONWARNING);
+	MessageBoxW(NULL, text.c_str(), L"Error message", MB_OK | MB_ICONWARNING);
 }
 
 int GetFileList(wchar_t *path, std::vector<PWIN32_FIND_DATAW> &files)

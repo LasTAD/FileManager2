@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <conio.h>
+#include "promo.h"
 
 using namespace std;
 

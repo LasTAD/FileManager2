@@ -16,17 +16,17 @@ void Archive::MakingArchive(wstring &src, wstring &res)
 
 	err = _wfopen_s(&fp, src.c_str(), L"rb");
 	if (err) {
-		MessageBox(NULL, L"Unable to open requested file!", L"Error", 0);
+		MessageBoxW(NULL, L"Unable to open requested file!", L"Error", 0);
 		return;
 	}
 	err = _wfopen_s(&fp2, L"temp.txt", L"wb");
 	if (err) {
-		MessageBox(NULL, L"Unable to create temp file!", L"Error", 0);
+		MessageBoxW(NULL, L"Unable to create temp file!", L"Error", 0);
 		return;
 	}
 	err = _wfopen_s(&fp3, res.c_str(), L"wb");
 	if (err) {
-		MessageBox(NULL, L"Unable to create compressed file!", L"Error", 0);
+		MessageBoxW(NULL, L"Unable to create compressed file!", L"Error", 0);
 		return;
 	}
 	sym *symbols = (sym*)malloc(counUnSym*sizeof(sym));//создание динамического массива структур simbols
@@ -96,7 +96,7 @@ void Archive::MakingArchive(wstring &src, wstring &res)
 	int i = 0;
 	err = _wfopen_s(&fp3, L"temp.txt", L"rb");
 	if (err) {
-		MessageBox(NULL, L"Unable to create new file!", L"Error", 0);
+		MessageBoxW(NULL, L"Unable to create new file!", L"Error", 0);
 		return;
 	}
 	//Считаем размер бинарного файла(количество символов в нём)

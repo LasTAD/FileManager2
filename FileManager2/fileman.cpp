@@ -93,10 +93,7 @@ void FileExplorer::updateView()
 void FileExplorer::enter()
 {
 	if (fileList[currentPos].fAttr==DOTDOT) {
-
-		// TODO: make disks list window
-
-		if (path.size() > 0) // stopgap
+		if (path.size() > 0)
 			path.pop_back();
 
 		parsePath();

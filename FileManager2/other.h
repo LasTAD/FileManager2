@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <vector>
 #include <sstream>
+#include "promo.h"
 
 #define  _CRT_SECURE_NO_WARNINGS
 
@@ -84,3 +85,12 @@ std::wstring cropt(std::wstring, int); // то же самое, но точечки сперели
 // Функция похожая с предыдущей, но работающая с байтами, приводящая их в более-менее понятный человеку вид
 std::wstring crop(ULONG64,int);
 std::wstring cropf(ULONG64, int); // то же самое, но спереди
+
+// Функция для преобразования типа в строку
+template <class T>
+std::wstring toString(const T& t)
+{
+	std::wstringstream ss;
+	ss << t;
+	return ss.str();
+}
