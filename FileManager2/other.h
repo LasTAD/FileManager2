@@ -6,8 +6,6 @@
 #include <sstream>
 #include "promo.h"
 
-#define  _CRT_SECURE_NO_WARNINGS
-
 struct File {
 	std::wstring	name;
 	std::wstring	fullname;
@@ -16,6 +14,8 @@ struct File {
 };
 
 typedef File* PFile;
+
+//void(*pf)(std::wstring& message);
 
 enum FAttributes {
 	DRIVE = 1,
@@ -61,7 +61,7 @@ enum ConsoleColor
 
 // Функция выводит сообщение об ошибке
 void ErrorMessage(wchar_t*);
-void ErrorMessage(std::wstring&);
+void ErrorMessage(std::wstring);
 
 // Функция для поиска файлов, возвращает 0 в случае успеха
 int GetFileList(wchar_t*, std::vector<PWIN32_FIND_DATAW>&);
@@ -81,6 +81,7 @@ char c(int);
 std::wstring crop(std::wstring, int);
 std::wstring cropf(std::wstring, int); // то же самое, но спереди
 std::wstring cropt(std::wstring, int); // то же самое, но точечки сперели
+std::wstring crop(std::wstring, wchar_t, int); // то же самое, но заполняет заданным символом
 
 // Функция похожая с предыдущей, но работающая с байтами, приводящая их в более-менее понятный человеку вид
 std::wstring crop(ULONG64,int);
@@ -94,3 +95,7 @@ std::wstring toString(const T& t)
 	ss << t;
 	return ss.str();
 }
+
+// Функция для заполнения char параметрами
+CHAR_INFO nc(char v, int cc = FWhite | BBlack);
+CHAR_INFO nw(wchar_t v, int cc = FWhite | BBlack);

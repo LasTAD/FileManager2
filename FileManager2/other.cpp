@@ -2,12 +2,15 @@
 
 void ErrorMessage(wchar_t *text)
 {
-	MessageBoxW(NULL, text, L"Error message", MB_OK | MB_ICONWARNING);
+	ErrorMessage(std::wstring(text));
 }
 
-void ErrorMessage(std::wstring &text)
+void ErrorMessage(std::wstring text)
 {
-	MessageBoxW(NULL, text.c_str(), L"Error message", MB_OK | MB_ICONWARNING);
+	//if (!pf)
+		MessageBox(NULL, text.c_str(), L"Error message", MB_OK | MB_ICONWARNING);
+	//else
+	//	pf(text);
 }
 
 int GetFileList(wchar_t *path, std::vector<PWIN32_FIND_DATAW> &files)
@@ -80,6 +83,13 @@ std::wstring crop(std::wstring str, int length)
 	return str;
 }
 
+std::wstring crop(std::wstring str, wchar_t sym, int length)
+{
+	if (str.length() > length) return str.substr(0, length - 3) + L"...";
+	if (str.length() < length) return str + l(sym, length - str.length());
+	return str;
+}
+
 std::wstring cropf(std::wstring str, int length)
 {
 	if (str.length() > length) return str.substr(0, length - 3) + L"...";
@@ -106,4 +116,22 @@ std::wstring cropf(ULONG64 value, int length)
 	std::wstringstream wss;
 	wss << value << "  B";
 	return cropf(wss.str(), length);
+}
+
+CHAR_INFO nc(char v, int cc)
+{
+	CHAR_INFO ci;
+	ci.Char.AsciiChar = v;
+	ci.Char.UnicodeChar = 0;
+	ci.Attributes = cc;
+	return ci;
+}
+
+CHAR_INFO nw(wchar_t v, int cc)
+{
+	CHAR_INFO ci;
+	ci.Char.AsciiChar = 0;
+	ci.Char.UnicodeChar = v;
+	ci.Attributes = cc;
+	return ci;
 }

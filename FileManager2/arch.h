@@ -1,8 +1,7 @@
 #pragma once
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "fileman.h"
 using namespace std;
+
 struct sym	//структуры или записи
 {
 	unsigned char ch;

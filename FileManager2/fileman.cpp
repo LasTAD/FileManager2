@@ -125,6 +125,29 @@ void Console::setCursorPos(short x, short y)
 	SetConsoleCursorPosition(hstdout, { x,y });
 }
 
+void Console::showError(wstring msg)
+{
+	CHAR_INFO ci[88 * 15];
+	CHAR_INFO nci[88 * 15];
+	SMALL_RECT sr;
+	sr.Top = 12;
+	sr.Bottom = 27;
+	sr.Left = 20;
+	sr.Right = 108;
+	ReadConsoleOutputW(hstdout, ci, { 88, 15 }, { 0, 0 }, &sr);
+
+	CIFillColor(nci, 0, 88 * 15, FWhite | BRed);
+	CIFillChar(nci, 0, 88 * 15, L' ');
+	CIBorder(nci, 15, 88, L"Error message", L"Press any key to continue");
+	CIText(nci, 15, 88, msg);
+	WriteConsoleOutputW(hstdout, nci, { 88, 15 }, { 0,0 }, &sr);
+
+	int g = _getch();
+	if (g == 0xE0 || g == 0) _getch();
+
+	WriteConsoleOutputW(hstdout, ci, { 88, 15 }, { 0,0 }, &sr);
+}
+
 void Console::drawExplorersBorder()
 {
 	setlocale(2, "C");
@@ -137,19 +160,20 @@ void Console::drawExplorersBorder()
 	for (int i = 3; i < 35; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
 	// Footer
 	wcout << c(195) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(180);
+	//TODO: сделать кнопочки
 	wcout << c(179) << l(' ', 126) << c(179);
 	wcout << c(192) << l(196, 126) << c(217);
 	setlocale(2, "rus");
 }
 
-void Console::draw()
+void Console::draw(bool req)
 {
 	setCursorPos(1, 36);
 	setColor(FWhite | BBlack);
 	wcout << cropt(fileExplorer.getPath(), 126);
 	// а здесь будет страшная дичь
 	static int e_first, e_last, e_cursorPos, path_size;
-	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size()) {
+	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size() && !req) {
 		if (e_cursorPos != fileExplorer.currentPos) {
 			CHAR_INFO ci1[128], ci2[128];
 			SMALL_RECT sr1, sr2;
@@ -289,14 +313,15 @@ void Console::work()
 					int i = fileExplorer.currentPos;
 					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
-					draw();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					int i = fileExplorer.currentPos;
 
 					filedel.StartDel(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
-					draw();
+					fileExplorer.parsePath();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F4) {
 					system("cls");
@@ -304,7 +329,8 @@ void Console::work()
 
 					filedel.ChName(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
-					draw();
+					fileExplorer.parsePath();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F5) {
 					system("cls");
@@ -312,7 +338,10 @@ void Console::work()
 
 					arch.StartArch(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
-					draw();
+					draw(true);
+				}
+				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_TAB) {
+					showError(L"Это сообщение об ошибке\nОб ошибке\nХа-ха");
 				}
 			}
 		}

@@ -195,14 +195,14 @@ void Archive::makeCodes(sym * root)
 {
 	if (root->left)
 	{
-		strcpy(root->left->code, root->code);
-		strcat(root->left->code, "0");
+		strcpy_s(root->left->code, root->code);
+		strcat_s(root->left->code, "0");
 		makeCodes(root->left);
 	}
 	if (root->right)
 	{
-		strcpy(root->right->code, root->code);
-		strcat(root->right->code, "1");
+		strcpy_s(root->right->code, root->code);
+		strcat_s(root->right->code, "1");
 		makeCodes(root->right);
 	}
 }

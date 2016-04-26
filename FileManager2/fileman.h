@@ -41,12 +41,13 @@ class Console {
 	HANDLE			hstdout, hstdin;
 	FileExplorer	fileExplorer;
 	void			drawExplorersBorder();
-	void			draw();
-public:
-	Console();
-	void			hideCursor();
-	void			showCursor();
-	void			work();
+	void			draw(bool req = false);
 	void			setColor(int);
 	void			setCursorPos(short, short);
+	void			hideCursor();
+	void			showCursor();
+public:
+	Console();
+	void			work();
+	void			showError(wstring msg);
 };
