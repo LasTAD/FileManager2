@@ -128,6 +128,47 @@ void Console::setCursorPos(short x, short y)
 	SetConsoleCursorPosition(hstdout, { x,y });
 }
 
+void Console::showError(wstring msg)
+{
+	CHAR_INFO ci[88 * 19];
+	SMALL_RECT sr;
+	sr.Top = 10;
+	sr.Bottom = 29;
+	sr.Left = 20;
+	sr.Right = 108;
+	ReadConsoleOutputW(hstdout, ci, { 88, 19 }, { 0, 0 }, &sr);
+
+	setColor(BRed | FWhite);
+	setlocale(2, "C");
+	setCursorPos(20, 10);
+	wcout << c(218) << l(196, 35) << L" Error message " << l(196, 36) << c(191);
+	int length = msg.length();
+	int pos = 0;
+	for (int i = 11; i < 28; i++) {
+		if (length <= 0) {
+			setCursorPos(20, i); wcout << c(179) << l(' ', 86) << c(179);
+			continue;
+		}
+		
+		wstring part = msg.substr(pos, min(length, 86));
+		pos += part.length();
+		length -= part.length();
+		setCursorPos(20, i);
+		wcout << c(179);
+		setlocale(2, "rus");
+		wcout << crop(part, 86);
+		setlocale(2, "C");
+		wcout << c(179);
+	}
+	setCursorPos(20, 28);
+	wcout << c(192) << l(196,35) << L" Press any key " << l(196, 36) << c(217);
+	setlocale(2, "rus");
+
+	_getch();
+
+	WriteConsoleOutputW(hstdout, ci, { 88, 19 }, { 0,0 }, &sr);
+}
+
 void Console::drawExplorersBorder()
 {
 	setlocale(2, "C");
@@ -140,19 +181,20 @@ void Console::drawExplorersBorder()
 	for (int i = 3; i < 35; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
 	// Footer
 	wcout << c(195) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(180);
+	//TODO: сделать кнопочки
 	wcout << c(179) << l(' ', 126) << c(179);
 	wcout << c(192) << l(196, 126) << c(217);
 	setlocale(2, "rus");
 }
 
-void Console::draw()
+void Console::draw(bool req)
 {
 	setCursorPos(1, 36);
 	setColor(FWhite | BBlack);
 	wcout << cropt(fileExplorer.getPath(), 126);
 	// а здесь будет страшная дичь
 	static int e_first, e_last, e_cursorPos, path_size;
-	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size()) {
+	if (e_first == fileExplorer.first && e_last == fileExplorer.last && path_size == fileExplorer.path.size() && !req) {
 		if (e_cursorPos != fileExplorer.currentPos) {
 			CHAR_INFO ci1[128], ci2[128];
 			SMALL_RECT sr1, sr2;
@@ -292,14 +334,15 @@ void Console::work()
 					int i = fileExplorer.currentPos;
 					filecopy.StartCopy(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
-					draw();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F3) {
 					int i = fileExplorer.currentPos;
 
 					filedel.StartDel(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
-					draw();
+					fileExplorer.parsePath();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F4) {
 					system("cls");
@@ -307,7 +350,8 @@ void Console::work()
 
 					filedel.ChName(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
-					draw();
+					fileExplorer.parsePath();
+					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F5) {
 					system("cls");
@@ -315,7 +359,10 @@ void Console::work()
 
 					arch.StartArch(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
-					draw();
+					draw(true);
+				}
+				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_TAB) {
+					showError(L" Непонятная ебаная хуйня вылезла .!.");
 				}
 			}
 		}

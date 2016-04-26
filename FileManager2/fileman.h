@@ -40,7 +40,7 @@ class Console {
 	HANDLE			hstdout, hstdin;
 	FileExplorer	fileExplorer;
 	void			drawExplorersBorder();
-	void			draw();
+	void			draw(bool req = false);
 public:
 	Console();
 	void			hideCursor();
@@ -48,4 +48,5 @@ public:
 	void			work();
 	void			setColor(int);
 	void			setCursorPos(short, short);
+	void			showError(wstring msg);
 };

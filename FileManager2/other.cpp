@@ -107,3 +107,21 @@ std::wstring cropf(ULONG64 value, int length)
 	wss << value << "  B";
 	return cropf(wss.str(), length);
 }
+
+CHAR_INFO newchar(char v, int cc)
+{
+	CHAR_INFO ci;
+	ci.Char.AsciiChar = v;
+	ci.Char.UnicodeChar = 0;
+	ci.Attributes = cc;
+	return ci;
+}
+
+CHAR_INFO newchar(wchar_t v, int cc)
+{
+	CHAR_INFO ci;
+	ci.Char.AsciiChar = 0;
+	ci.Char.UnicodeChar = v;
+	ci.Attributes = cc;
+	return ci;
+}

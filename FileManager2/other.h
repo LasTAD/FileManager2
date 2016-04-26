@@ -84,3 +84,7 @@ std::wstring cropt(std::wstring, int); // то же самое, но точечки сперели
 // Функция похожая с предыдущей, но работающая с байтами, приводящая их в более-менее понятный человеку вид
 std::wstring crop(ULONG64,int);
 std::wstring cropf(ULONG64, int); // то же самое, но спереди
+
+// Функция для заполнения char параметрами
+CHAR_INFO newchar(char v, int cc = FWhite | BBlack);
+CHAR_INFO newchar(wchar_t v, int cc = FWhite | BBlack);
