@@ -2,11 +2,11 @@
 
 Console console;
 
-//void errmsgdelegate(std::wstring& msg) {
-//	console.showError(msg);
-//}
+void ErrorMessage(std::wstring text)
+{
+	console.showError(text);
+}
 
 int main() {
 	console.work();
-	//pf = errmsgdelegate;
 }

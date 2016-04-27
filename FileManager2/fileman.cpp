@@ -2,29 +2,29 @@
 #include "file_act.h"
 #include "arch.h"
 
-void FileExplorer::parsePath()
+bool FileExplorer::parsePath()
 {
-	fileList.clear();
 	if (path.size() == 0) {
 		wchar_t drives[128];
 		DWORD count = GetLogicalDriveStringsW(128, drives);
+		fileList.clear();
 		for (DWORD i = 0; i < count; i += 4) {
 			File file;
 			file.name = drives[i];
 			file.fullname = drives[i];
 			file.fAttr = DRIVE;
 			
-			ULARGE_INTEGER FreeBytesAvailable;
-			ULARGE_INTEGER TotalNumberOfBytes;
-			ULARGE_INTEGER TotalNumberOfFreeBytes;
-			BOOL GetDiskFreeSpaceFlag = GetDiskFreeSpaceExW(
-				&drives[i],									// directory name
-				(PULARGE_INTEGER)&FreeBytesAvailable,		// bytes available to caller
-				(PULARGE_INTEGER)&TotalNumberOfBytes,		// bytes on disk
-				(PULARGE_INTEGER)&TotalNumberOfFreeBytes	// free bytes on disk
-				);
-			if (!GetDiskFreeSpaceFlag) ErrorMessage(L"Can't check disk space");
-			file.size = TotalNumberOfBytes.QuadPart - TotalNumberOfFreeBytes.QuadPart;
+			//ULARGE_INTEGER FreeBytesAvailable;
+			//ULARGE_INTEGER TotalNumberOfBytes;
+			//ULARGE_INTEGER TotalNumberOfFreeBytes;
+			//BOOL GetDiskFreeSpaceFlag = GetDiskFreeSpaceExW(
+			//	&drives[i],									// directory name
+			//	(PULARGE_INTEGER)&FreeBytesAvailable,		// bytes available to caller
+			//	(PULARGE_INTEGER)&TotalNumberOfBytes,		// bytes on disk
+			//	(PULARGE_INTEGER)&TotalNumberOfFreeBytes	// free bytes on disk
+			//	);
+			////if (!GetDiskFreeSpaceFlag) ErrorMessage(L"Can't check disk space");
+			//file.size = TotalNumberOfBytes.QuadPart - TotalNumberOfFreeBytes.QuadPart;
 
 			fileList.push_back(file);
 		}
@@ -32,7 +32,8 @@ void FileExplorer::parsePath()
 	else {
 		wstring path = getPath();
 		vector<PWIN32_FIND_DATAW> foundFiles;
-		GetFileList(path, foundFiles);
+		if (GetFileList(path, foundFiles) != 0) return false;
+		fileList.clear();
 		// check error
 		File dotdot;
 		dotdot.fullname = L"..";
@@ -48,6 +49,27 @@ void FileExplorer::parsePath()
 				file.fAttr = DIR;
 			else 
 				file.fAttr = FIL;
+			wstringstream wr; wr << "/"; //wr << f->cFileName << L"   " << (unsigned long)f->dwFileAttributes;
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_READONLY) wr << "[readonly]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) wr << "[hidden]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) wr << "[sys]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) wr << "[dir]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) wr << "[arch]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_DEVICE) wr << "[device]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_NORMAL) wr << "[normal]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) wr << "[temp]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) wr << "[sparse]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) wr << "[reparse]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) wr << "[compressed]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_OFFLINE) wr << "[offline]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) wr << "[nci]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED) wr << "[enc]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) wr << "[intstr]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_VIRTUAL) wr << "[virt]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) wr << "[nsd]";
+			if (f->dwFileAttributes & FILE_ATTRIBUTE_EA) wr << "[ea]";
+			//WriteToLog(wr.str());
+			file.name += wr.str();
 			fileList.push_back(file);
 			delete f;
 		}
@@ -59,6 +81,7 @@ void FileExplorer::parsePath()
 	page = 0;
 
 	updateView();
+	return true;
 }
 
 void FileExplorer::down()
@@ -93,14 +116,16 @@ void FileExplorer::updateView()
 void FileExplorer::enter()
 {
 	if (fileList[currentPos].fAttr==DOTDOT) {
-		if (path.size() > 0)
-			path.pop_back();
+		wstring tmp = path[path.size() - 1];
+		path.pop_back();
 
-		parsePath();
+		if (!parsePath()) path.push_back(tmp);
 	}
 	else if (fileList[currentPos].fAttr==DIR || fileList[currentPos].fAttr==DRIVE) {
-		path.push_back(fileList[currentPos].name);
-		parsePath();
+		wstring name = fileList[currentPos].name.substr(0, fileList[currentPos].name.find(L'/'));
+		//path.push_back(fileList[currentPos].name);
+		path.push_back(name);
+		if (!parsePath()) path.pop_back();
 	}
 }
 
@@ -163,6 +188,7 @@ void Console::drawExplorersBorder()
 	//TODO: сделать кнопочки
 	wcout << c(179) << l(' ', 126) << c(179);
 	wcout << c(192) << l(196, 126) << c(217);
+	wcout << L" F2 Copy | F3 Delete | F4 Rename";
 	setlocale(2, "rus");
 }
 
@@ -279,6 +305,11 @@ void Console::showCursor()
 	SetConsoleCursorInfo(hstdout, &cci);
 }
 
+void Console::showRename()
+{
+
+}
+
 void Console::work()
 {
 	FileCopy filecopy;
@@ -291,7 +322,7 @@ void Console::work()
 
 	drawExplorersBorder();
 	draw();
-	
+
 	while (!WaitForSingleObject(hstdin, INFINITE)) {
 		ReadConsoleInputW(hstdin, &pin, 1, &event_count);
 		if (pin.EventType == KEY_EVENT) {

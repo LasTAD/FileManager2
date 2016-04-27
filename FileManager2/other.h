@@ -60,7 +60,7 @@ enum ConsoleColor
 };
 
 // Функция выводит сообщение об ошибке
-void ErrorMessage(wchar_t*);
+//void ErrorMessage(wchar_t*);
 void ErrorMessage(std::wstring);
 
 // Функция для поиска файлов, возвращает 0 в случае успеха

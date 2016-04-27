@@ -1,13 +1,12 @@
 #include "file_act.h"
 using namespace std;
 
-
 void FileCopy::StartCopy(wstring &srcPath, int isDir) 
 {
+
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;
-	
 	if (isDir==FIL)
 		_CopyFile(srcPath, resPath);
 	else if (isDir==DIR) {

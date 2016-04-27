@@ -1,18 +1,5 @@
 #include "other.h"
 
-void ErrorMessage(wchar_t *text)
-{
-	ErrorMessage(std::wstring(text));
-}
-
-void ErrorMessage(std::wstring text)
-{
-	//if (!pf)
-		MessageBox(NULL, text.c_str(), L"Error message", MB_OK | MB_ICONWARNING);
-	//else
-	//	pf(text);
-}
-
 int GetFileList(wchar_t *path, std::vector<PWIN32_FIND_DATAW> &files)
 {
 	std::wstring spath(path);
@@ -25,9 +12,7 @@ int GetFileList(std::wstring path, std::vector<PWIN32_FIND_DATAW> &files)
 	PWIN32_FIND_DATAW data = new WIN32_FIND_DATAW;
 	HANDLE handle = FindFirstFileW((path + L"*.*").c_str(), data);
 	if (handle == INVALID_HANDLE_VALUE) {
-		std::wstringstream wss;
-		wss << L"GetFileList: invalid handle, error code = " << GetLastError();
-		ErrorMessage(wss.str());
+		ErrorMessage(L"Access denied");
 		return 1;
 	}
 	do {

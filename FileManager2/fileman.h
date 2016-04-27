@@ -11,21 +11,17 @@
 #include <vector>
 #include <conio.h>
 #include "promo.h"
-
 using namespace std;
 
-/*  ласс-проводник
- * Ќуждаетс€ в доработке
- */
 class FileExplorer {
 public:
 	vector<wstring> path;
-	int				currentPos = 0;		// думаю, диапазона int хватит :)
+	int				currentPos = 0;		
 	int				first, last;
 	int				filesPerPage = 32;
 	int				page;
 	vector<File>	fileList;
-	void			parsePath();
+	bool			parsePath();
 	wstring			getPath();			// возвращает текущую директорию, в которой мы работаем
 	void			down();				// перемещает курсор вниз
 	void			up();				// меремещает курсор вверх
@@ -46,6 +42,7 @@ class Console {
 	void			setCursorPos(short, short);
 	void			hideCursor();
 	void			showCursor();
+	void			showRename();
 public:
 	Console();
 	void			work();
