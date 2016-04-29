@@ -45,34 +45,33 @@ bool FileExplorer::parsePath()
 			file.name = f->cFileName;
 			file.fullname = path + f->cFileName;
 			file.size = (f->nFileSizeHigh * MAXDWORD) + f->nFileSizeLow;
-			
 			if ((bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				file.fAttr = DIR;
 			else if ((bool)(f->dwFileAttributes & FILE_ATTRIBUTE_SYSTEM))
 				file.fAttr = SYS;
 			else 
 				file.fAttr = FIL;
-			wstringstream wr; wr << "/"; //wr << f->cFileName << L"   " << (unsigned long)f->dwFileAttributes;
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_READONLY) wr << "[readonly]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) wr << "[hidden]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) wr << "[sys]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) wr << "[dir]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) wr << "[arch]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_DEVICE) wr << "[device]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_NORMAL) wr << "[normal]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) wr << "[temp]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) wr << "[sparse]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) wr << "[reparse]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) wr << "[compressed]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_OFFLINE) wr << "[offline]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) wr << "[nci]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED) wr << "[enc]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) wr << "[intstr]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_VIRTUAL) wr << "[virt]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) wr << "[nsd]";
-			if (f->dwFileAttributes & FILE_ATTRIBUTE_EA) wr << "[ea]";
-			//WriteToLog(wr.str());
-			file.name += wr.str();
+			//wstringstream wr; wr << "/"; //wr << f->cFileName << L"   " << (unsigned long)f->dwFileAttributes;
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_READONLY) wr << "[readonly]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) wr << "[hidden]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) wr << "[sys]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) wr << "[dir]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) wr << "[arch]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_DEVICE) wr << "[device]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_NORMAL) wr << "[normal]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) wr << "[temp]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) wr << "[sparse]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) wr << "[reparse]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) wr << "[compressed]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_OFFLINE) wr << "[offline]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) wr << "[nci]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED) wr << "[enc]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) wr << "[intstr]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_VIRTUAL) wr << "[virt]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) wr << "[nsd]";
+			//if (f->dwFileAttributes & FILE_ATTRIBUTE_EA) wr << "[ea]";
+			////WriteToLog(wr.str());
+			//file.name += wr.str();
 			fileList.push_back(file);
 			delete f;
 		}
@@ -190,7 +189,7 @@ void Console::drawExplorersBorder()
 	wcout << c(195) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(180);
 	wcout << c(179) << l(' ', 126) << c(179);
 	wcout << c(192) << l(196, 126) << c(217);
-	wcout << L" F2 Copy | F3 Delete | F4 Change Name | F5 Make an Archive";
+	wcout << L" F2 Copy | F3 Delete | F4 Change Name | F5 Archiving | Esc Exit";
 	setlocale(2, "rus");
 }
 
@@ -229,7 +228,7 @@ void Console::draw(bool req)
 			setCursorPos(86, j);
 			wcout << (fileExplorer.fileList[i].fAttr ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
 			setCursorPos(107, j);
-			wcout << crop(fileExplorer.fileList[i].fAttr==DIR ? L"Directory" : (fileExplorer.fileList[i].fAttr==DRIVE ? L"Drive" :(fileExplorer.fileList[i].fAttr == DOTDOT ? L"": (fileExplorer.fileList[i].fAttr == SYS ? L"System" : L"File"))), 20);
+			wcout << crop(fileExplorer.fileList[i].fAttr==DIR ? L"Directory" : (fileExplorer.fileList[i].fAttr==DRIVE ? L"Drive" :(fileExplorer.fileList[i].fAttr == DOTDOT ? L"": (fileExplorer.fileList[i].fAttr == SYS ? L"System" :  L"File"))), 20);
 		}
 		else {
 			setColor(FWhite | BBlack);
@@ -366,12 +365,14 @@ void Console::work()
 					draw(true);
 				}
 				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_F5) {
-					system("cls");
 					int i = fileExplorer.currentPos;
-
-					arch.StartArch(fileExplorer.fileList[i].fullname);
+					arch.StartArch(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
+					fileExplorer.parsePath();
 					draw(true);
+				}
+				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) {
+					exit(0);
 				}
 			}
 		}

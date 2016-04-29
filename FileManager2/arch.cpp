@@ -1,208 +1,148 @@
 #include "arch.h"
+#include <fstream>
+#include <map>
+#include <vector>
 using namespace std;
 
-void Archive::StartArch(wstring & inPath)
+void Archive::StartArch(wstring & fileName, int isFile)
 {
-	wstring resPath;
-	wcout << "\t\t\t***ARCHIVE_MAKER***\n";
-	wcout << "Input path to archive: ";
-	wcin >> resPath;
-	MakingArchive(inPath, resPath);
+	if (isFile != FIL) {
+		ErrorMessage(L"Unable to archive directories or system files!");
+		return;
+	}
+	wstring extens;
+	extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
+	if (extens == L"cmpr") 
+		UnArch(fileName);
+	else
+		Arch(fileName);
 }
 
-void Archive::MakingArchive(wstring &src, wstring &res)
-{	
-	errno_t err;
-
-	err = _wfopen_s(&fp, src.c_str(), L"rb");
-	if (err) {
-		MessageBoxW(NULL, L"Unable to open requested file!", L"Error", 0);
-		return;
-	}
-	err = _wfopen_s(&fp2, L"temp.txt", L"wb");
-	if (err) {
-		MessageBoxW(NULL, L"Unable to create temp file!", L"Error", 0);
-		return;
-	}
-	err = _wfopen_s(&fp3, res.c_str(), L"wb");
-	if (err) {
-		MessageBoxW(NULL, L"Unable to create compressed file!", L"Error", 0);
-		return;
-	}
-	sym *symbols = (sym*)malloc(counUnSym*sizeof(sym));//создание динамического массива структур simbols
-	sym **psum = (sym**)malloc(counUnSym*sizeof(sym*));//создание динамического массива указателей на simbols
-
-											   //Начинаем побайтно читать файл и составлять таблицу встречаемости
-	while ((chh = fgetc(fp)) != EOF)
+void Archive::Arch(wstring &fileName)
+{
+	int quant = 0;
+	int weight[0x100];
+	for (auto &i : weight)
+		i = 0;
 	{
-		for (int j = 0; j<256; j++)
+		ifstream f(fileName);
+		while (!f.eof())
 		{
-			if (chh == simbols[j].ch)
-			{
-				quan[j]++;
-				counSym++;
-				break;
-			}
-			if (simbols[j].ch == 0)
-			{
-				simbols[j].ch = (unsigned char)chh;
-				quan[j] = 1;
-				counUnSym++; counSym++;
-				break;
-			}
+			++quant;
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
+			++weight[ch];
 		}
 	}
 
-	// Рассчёт частоты встречаемости
-	for (int i = 0; i<counUnSym; i++)
-		simbols[i].freq = (float)quan[i] / counSym;
+	multimap<int, int> sortedWeight;
+	vector<Node> tree;
+	map<char, int> charMap;
+	for (size_t i = 0; i < 0x100; ++i)
+	{
+		if (weight[i] > 0)
+		{
+			tree.push_back(Node{ (char)i,-1,-1,-1,false });
+			charMap[i] = tree.size() - 1;
+			sortedWeight.insert(make_pair(weight[i], tree
+				.size() - 1));
+		}
+	}
+	while (sortedWeight.size() > 1)
+	{
+		int w0 = begin(sortedWeight)->first;
+		int n0 = begin(sortedWeight)->second;
+		sortedWeight.erase(begin(sortedWeight));
+		int w1 = begin(sortedWeight)->first;
+		int n1 = begin(sortedWeight)->second;
+		sortedWeight.erase(begin(sortedWeight));
+		tree.push_back(Node{ '\0',-1,n0,n1,false });
+		tree[n0].parent = tree.size() - 1;
+		tree[n0].branch = false;
+		tree[n1].parent = tree.size() - 1;
+		tree[n1].branch = true;
+		sortedWeight.insert(make_pair(w0 + w1, tree.size() - 1));
+	}
+	vector<bool> data;
+	{
+		ifstream f(fileName, ios::binary);
+		while (!f.eof())
+		{
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
+			vector<bool> compressedChar;
+			auto n = tree[charMap[ch]];
 
-	for (int i = 0; i<counUnSym; i++) //в массив указателей заносим адреса записей
-		psym[i] = &simbols[i];
-
-	//Сортировка по убыванию 
-	sym tempp;
-	for (int i = 1; i<counUnSym; i++)
-		for (int j = 0; j<counUnSym - 1; j++)
-			if (simbols[j].freq<simbols[j + 1].freq)
+			while (n.parent != -1)
 			{
-				tempp = simbols[j];
-				simbols[j] = simbols[j + 1];
-				simbols[j + 1] = tempp;
+				compressedChar.push_back(n.branch);
+				n = tree[n.parent];
 			}
-
-	for (int i = 0; i<counUnSym; i++)
-	{
-		sumFreMet += simbols[i].freq;
-		printf("Ch= %d\tFreq= %f\tPPP= %c\t\n", simbols[i].ch, simbols[i].freq, psym[i]->ch, i);
-	}
-	printf("\n Words = %d\tSumFreMet=%f\n", counSym, sumFreMet);
-
-	sym *root = makeTree(psym, counUnSym);//вызов функции создания дерева Хофмана
-
-	makeCodes(root);//вызов функции получения кода
-
-	rewind(fp);//возвращаем указатель в файле в начало файла
-			   //в цикле читаем исходный файл, и записываем полученные в функциях коды в промежуточный файл
-	while ((chh = fgetc(fp)) != EOF)
-	{
-		for (int i = 0; i<counUnSym; i++)
-			if (chh == simbols[i].ch)
-				fputs(simbols[i].code, fp2);
-	}
-	fclose(fp2);
-
-	//Заново открываем файл с бинарным кодом, но теперь для чтения
-	int i = 0;
-	err = _wfopen_s(&fp3, L"temp.txt", L"rb");
-	if (err) {
-		MessageBoxW(NULL, L"Unable to create new file!", L"Error", 0);
-		return;
-	}
-	//Считаем размер бинарного файла(количество символов в нём)
-	while ((chh = fgetc(fp2)) != EOF)
-		fsize2++;
-
-	remSize = fsize2 % 8;//находим остаток, количество символов не кратных 8 (хвост)
-
-					//формируем заголовок сжатого файла через поля байтов
-	fwrite("compresing!!!", sizeof(char), 24, fp3);//условная подпись
-	fwrite(&counUnSym, sizeof(int), 1, fp3);//количество уникальных символов
-	fwrite(&remSize, sizeof(int), 1, fp3);//величина хвоста
-									 //Записываем в сжатый файл таблицу встречаемости
-	for (i = 0; i<counUnSym; i++)
-	{
-		fwrite(&simbols[i].ch, sizeof(sym), 1, fp3);
-		fwrite(&simbols[i].freq, sizeof(sym), 1, fp3);
-	}
-
-	rewind(fp2);//возвращаем указатель в промежуточном файле в начало файла
-
-	union code code1;		//инициализируем переменную code1
-							//Читаем бинарный файл, занося последовательно каждые 8 элементов в массив 
-							//для последующей побитовой обработки в объединении	union
-	j = 0;
-	for (int i = 0; i<fsize2 - remSize; i++)
-	{
-		mas[j] = fgetc(fp2);
-		if (j == 7)
-		{
-			code1.byte.b1 = mas[0] - '0';
-			code1.byte.b2 = mas[1] - '0';
-			code1.byte.b3 = mas[2] - '0';
-			code1.byte.b4 = mas[3] - '0';
-			code1.byte.b5 = mas[4] - '0';
-			code1.byte.b6 = mas[5] - '0';
-			code1.byte.b7 = mas[6] - '0';
-			code1.byte.b8 = mas[7] - '0';
-			fputc(code1.chhh, fp3);
-			j = 0;
+			data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
 		}
-		j++;
 	}
-	//Записываем хвост
-	j = 0;
-	for (int i = 0; i <= remSize; i++)
+	ofstream f(fileName+L"cmpr", ios::binary);
+	--quant;
+	f.write((char*)&quant, sizeof(quant));
+	int treeSize = tree.size();
+	f.write((char*)&treeSize, sizeof(treeSize));
+	for (auto i : tree)
+		f.write((char*)&i, sizeof(i));
+	for (size_t i = 0; i <= data.size() / 8; ++i)
 	{
-		mas[j] = fgetc(fp2);
-		if (j == remSize)
-		{
-			code1.byte.b1 = mas[0] - '0';
-			code1.byte.b2 = mas[1] - '0';
-			code1.byte.b3 = mas[2] - '0';
-			code1.byte.b4 = mas[3] - '0';
-			code1.byte.b5 = mas[4] - '0';
-			code1.byte.b6 = mas[5] - '0';
-			code1.byte.b7 = mas[6] - '0';
-			code1.byte.b8 = mas[7] - '0';
-			fputc(code1.chhh, fp3);
-		}
-		j++;
+		unsigned char ch = 0;
+		for (int j = 0; j < 8; ++j)
+			if ((i * 8 + j) >= data.size()) break;
+			else
+				if (data[i * 8 + j])
+					ch |= (1 << j);
+		f.write((char*)&ch, sizeof(ch));
 	}
-
-	_fcloseall();//закрываем все открытые файлы
-	_getch();
-	return;
 }
 
-sym * Archive::makeTree(sym * psym[], int k)
+void Archive::UnArch(wstring &fileName)
 {
-	sym *temp;
-	temp = (sym*)malloc(sizeof(sym));
-	temp->freq = psym[k - 1]->freq + psym[k - 2]->freq;
-	temp->code[0] = 0;
-	temp->left = psym[k - 1];
-	temp->right = psym[k - 2];
-
-	if (k == 2)
-		return temp;
-	else //внесение в массив в нужное место элемента дерева Хофмана
+	vector<Node> tree;
+	ifstream f(fileName, ios::binary);
+	unsigned int quant;
+	f.read((char*)&quant, sizeof(quant));
+	int treeSize;
+	f.read((char*)&treeSize, sizeof(treeSize));
+	for (int i = 0; i < treeSize; ++i)
 	{
-		for (int i = 0; i<k; i++)
-			if (temp->freq>psym[i]->freq)
+		Node n;
+		f.read((char*)&n, sizeof(n));
+		tree.push_back(n);
+	}
+	vector<bool> data;
+	while (!f.eof())
+	{
+		unsigned char ch;
+		f.read((char *)&ch, sizeof(ch));
+		for (int i = 0; i < 8; ++i)
+			data.push_back((ch&(1 << i)) != 0);
+
+	}
+	auto n = tree.size() - 1;
+	
+	wstring unCompFile;
+	unCompFile = fileName.substr(0, fileName.length()-4);
+	
+	ofstream f1(unCompFile);
+	for (auto i : data)
+	{
+		if (i)
+			n = tree[n].one;
+		else
+			n = tree[n].zero;
+		if (tree[n].one == -1)
+		{
+			if (quant--)
 			{
-				for (int j = k - 1; j>i; j--)
-					psym[j] = psym[j - 1];
-
-				psym[i] = temp;
-				break;
+				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+				n = tree.size() - 1;
 			}
-	}
-	return makeTree(psym, k - 1);
-}
-
-void Archive::makeCodes(sym * root)
-{
-	if (root->left)
-	{
-		strcpy_s(root->left->code, root->code);
-		strcat_s(root->left->code, "0");
-		makeCodes(root->left);
-	}
-	if (root->right)
-	{
-		strcpy_s(root->right->code, root->code);
-		strcat_s(root->right->code, "1");
-		makeCodes(root->right);
+			else break;
+		}
 	}
 }
