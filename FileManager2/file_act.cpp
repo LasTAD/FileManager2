@@ -3,7 +3,10 @@ using namespace std;
 
 void FileCopy::StartCopy(wstring &srcPath, int isDir) 
 {
-
+	if (isDir == SYS) {
+		ErrorMessage(L"Unable to copy this file!");
+		return;
+	}
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;
@@ -78,18 +81,28 @@ void FileCopy::_Copy(wstring src, wstring res)
 
 void FileDel::StartDel(wstring & path, int isDir)
 {
+	if (isDir == SYS) {
+		ErrorMessage(L"Unable to delete this file!");
+		return;
+	}
 	if (isDir==FIL)
 		DelFile(path);
 	else if(isDir==DIR)
 		_Del(path);
 }
 
-void FileDel::ChName(wstring &oldName)
+void FileDel::ChName(wstring &oldName, int isDir)
 {
-	wstring newName;
+	if (isDir == SYS) {
+		ErrorMessage(L"Unable to change name of this file!");
+		return;
+	}
+	wstring newName, path;
 	wcout << "Input new name: ";
 	wcin >> newName;
-	if(_wrename(oldName.c_str(), newName.c_str()))
+	size_t pos = oldName.find_last_of(L'\\', oldName.length());
+	path = oldName.substr(0, pos+1);
+	if(_wrename(oldName.c_str(), (path + newName).c_str()))
 		ErrorMessage(L"Unable to rename file or directory!");
 }
 

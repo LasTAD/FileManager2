@@ -45,8 +45,11 @@ bool FileExplorer::parsePath()
 			file.name = f->cFileName;
 			file.fullname = path + f->cFileName;
 			file.size = (f->nFileSizeHigh * MAXDWORD) + f->nFileSizeLow;
+			
 			if ((bool)(f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				file.fAttr = DIR;
+			else if ((bool)(f->dwFileAttributes & FILE_ATTRIBUTE_SYSTEM))
+				file.fAttr = SYS;
 			else 
 				file.fAttr = FIL;
 			wstringstream wr; wr << "/"; //wr << f->cFileName << L"   " << (unsigned long)f->dwFileAttributes;
@@ -185,10 +188,9 @@ void Console::drawExplorersBorder()
 	for (int i = 3; i < 35; i++) { setCursorPos(0, i); wcout << c(179); setCursorPos(85, i); wcout << c(179); setCursorPos(106, i); wcout << c(179); setCursorPos(127, i); wcout << c(179); }
 	// Footer
 	wcout << c(195) << l(196, 84) << c(193) << l(196, 20) << c(193) << l(196, 20) << c(180);
-	//TODO: сделать кнопочки
 	wcout << c(179) << l(' ', 126) << c(179);
 	wcout << c(192) << l(196, 126) << c(217);
-	wcout << L" F2 Copy | F3 Delete | F4 Rename";
+	wcout << L" F2 Copy | F3 Delete | F4 Change Name | F5 Make an Archive";
 	setlocale(2, "rus");
 }
 
@@ -227,7 +229,7 @@ void Console::draw(bool req)
 			setCursorPos(86, j);
 			wcout << (fileExplorer.fileList[i].fAttr ? l(' ', 20) : cropf(fileExplorer.fileList[i].size, 20));
 			setCursorPos(107, j);
-			wcout << crop(fileExplorer.fileList[i].fAttr==DIR ? L"Directory" : (fileExplorer.fileList[i].fAttr==DRIVE ? L"Drive" :(fileExplorer.fileList[i].fAttr == DOTDOT ? L"": L"File")), 20);
+			wcout << crop(fileExplorer.fileList[i].fAttr==DIR ? L"Directory" : (fileExplorer.fileList[i].fAttr==DRIVE ? L"Drive" :(fileExplorer.fileList[i].fAttr == DOTDOT ? L"": (fileExplorer.fileList[i].fAttr == SYS ? L"System" : L"File"))), 20);
 		}
 		else {
 			setColor(FWhite | BBlack);
@@ -358,7 +360,7 @@ void Console::work()
 					system("cls");
 					int i = fileExplorer.currentPos;
 
-					filedel.ChName(fileExplorer.fileList[i].fullname);
+					filedel.ChName(fileExplorer.fileList[i].fullname, fileExplorer.fileList[i].fAttr);
 					drawExplorersBorder();
 					fileExplorer.parsePath();
 					draw(true);
@@ -370,9 +372,6 @@ void Console::work()
 					arch.StartArch(fileExplorer.fileList[i].fullname);
 					drawExplorersBorder();
 					draw(true);
-				}
-				else if (pin.Event.KeyEvent.wVirtualKeyCode == VK_TAB) {
-					showError(L"Это сообщение об ошибке\nОб ошибке\nХа-ха");
 				}
 			}
 		}

@@ -16,7 +16,7 @@ private:
 class FileDel {
 public:
 	void StartDel(wstring &, int);
-	void ChName(wstring &);
+	void ChName(wstring &, int);
 private:
 	void DelFile(wstring &);
 	void DelDir(wstring &);

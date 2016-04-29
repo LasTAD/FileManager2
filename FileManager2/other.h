@@ -18,10 +18,11 @@ typedef File* PFile;
 //void(*pf)(std::wstring& message);
 
 enum FAttributes {
+	FIL = 0,
 	DRIVE = 1,
 	DOTDOT = 2,
 	DIR = 3,
-	FIL = 0
+	SYS = 4
 };
 enum ConsoleColor
 {
