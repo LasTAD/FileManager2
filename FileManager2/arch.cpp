@@ -6,10 +6,12 @@ using namespace std;
 
 void Archive::StartArch(wstring & fileName, int isFile)
 {
+	// TODO
+	/*
 	if (isFile != FIL) {
 		ErrorMessage(L"Unable to archive directories or system files!");
 		return;
-	}
+	}*/
 	wstring extens;
 	extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
 	if (extens == L"cmpr") 

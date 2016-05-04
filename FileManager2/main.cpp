@@ -1,12 +1,7 @@
-#include "fileman.h"
-
-Console console;
-
-void ErrorMessage(std::wstring text)
-{
-	console.showError(text);
-}
+#include "app.h"
+#include "files.h"
 
 int main() {
+	Console console;
 	console.work();
 }

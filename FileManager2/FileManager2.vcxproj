@@ -146,19 +146,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app.cpp" />
     <ClCompile Include="arch.cpp" />
-    <ClCompile Include="fileman.cpp" />
+    <ClCompile Include="files.cpp" />
     <ClCompile Include="file_act.cpp" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="other.cpp" />
-    <ClCompile Include="promo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app.h" />
     <ClInclude Include="arch.h" />
-    <ClInclude Include="fileman.h" />
+    <ClInclude Include="files.h" />
     <ClInclude Include="file_act.h" />
-    <ClInclude Include="other.h" />
-    <ClInclude Include="promo.h" />
+    <ClInclude Include="gui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

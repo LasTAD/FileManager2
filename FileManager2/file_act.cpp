@@ -1,18 +1,26 @@
 #include "file_act.h"
+#include <string>
+#include <Windows.h>
+#include "gui.h"
+
 using namespace std;
 
+// !!! ВНИМАНИЕ
+// TODO для совместимости я сделаю так: isDir = 1 если директория, 0 если файл
 void FileCopy::StartCopy(wstring &srcPath, int isDir) 
 {
+	// TODO я сделаю проверку в консоли
+	/*
 	if (isDir == SYS) {
 		ErrorMessage(L"Unable to copy this file!");
 		return;
-	}
+	}*/
 	wstring resPath;
 	wcout << "Input path to paste: ";
 	wcin >> resPath;
-	if (isDir==FIL)
+	if (isDir==1) // TODO
 		_CopyFile(srcPath, resPath);
-	else if (isDir==DIR) {
+	else if (isDir==1) { // TODO
 		size_t pos = srcPath.find_last_of(L'\\', srcPath.length());
 		wstring res1;
 		res1 = srcPath.substr(pos + 1, srcPath.length() - pos - 1);
@@ -27,12 +35,14 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 	FILE *fileSrc, *fileRes;
 	err = _wfopen_s(&fileSrc, src.c_str(), L"rb");
 	if (err) {
-		ErrorMessage(L"Unable to open requested file!");
+		// TODO
+		//ErrorMessage(L"Unable to open requested file!");
 		return;
 	}
 	err = _wfopen_s(&fileRes, res.c_str(), L"wb");
 	if (err) {
-		ErrorMessage(L"Unable to create new file!");
+		// TODO
+		// ErrorMessage(L"Unable to create new file!");
 		return;
 	}
 	unsigned int fsize, n;
@@ -59,7 +69,8 @@ void FileCopy::_CopyFile(wstring &src, wstring &res)
 void FileCopy::CreateDir(wstring &path)
 {
 	if (!CreateDirectoryW(path.c_str(),NULL))
-		ErrorMessage(L"Unable to create directory!");
+		// TODO
+		//ErrorMessage(L"Unable to create directory!");
 }
 
 void FileCopy::_Copy(wstring src, wstring res)
