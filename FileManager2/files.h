@@ -33,3 +33,6 @@ wstring errorCodeToString(DWORD code);
 
 // удаляет файл/директорию и все внутри
 bool removeFile(wstring path, bool isDir);
+
+// копирует все содержимое
+bool copyFile(wstring from, wstring to, bool isDir);

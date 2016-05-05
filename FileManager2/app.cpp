@@ -243,6 +243,7 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
+				copyFile(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", true);
 			}
 			else if (b == 62) { // f4 delete
 				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {

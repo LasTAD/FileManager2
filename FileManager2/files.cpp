@@ -90,3 +90,91 @@ bool removeFile(wstring path, bool isDir)
 		return DeleteFileW(path.c_str());
 	}
 }
+/*
+bool copyDir(wstring src, wstring res)
+{
+	vector<PWIN32_FIND_DATAW> dirFiles;
+
+	if (!getFiles(src + L'\\', dirFiles)) {
+		return false;
+	}
+
+	for (int i = 0; i < dirFiles.size(); i++) {
+		if (dirFiles[i]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			CreateDir(res + L'\\' + dirFiles[i]->cFileName);
+			CreateDirectoryW()
+			_Copy(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
+		}
+		else
+			_CopyFile(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
+		delete dirFiles[i];
+	}
+}
+*/
+
+bool copyFile(wstring from, wstring to, bool isDir)
+{
+	// TEST
+	HANDLE f1 = CreateFileW(from.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f1 == INVALID_HANDLE_VALUE) {
+		CloseHandle(f1);
+		return false;
+	}
+	/*
+	HANDLE f2 = CreateFileW(to.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f2 == INVALID_HANDLE_VALUE) {
+		DWORD v = GetLastError();
+		CloseHandle(f1);
+		CloseHandle(f2);
+		return false;
+	}*/
+
+	DWORD v = GetLastError();
+	char buf[4096];
+	unsigned long long read = 0;
+	DWORD length = 0;
+	do {
+		ReadFile(f1, buf, 4096, &length, NULL);
+		read += length;
+	} while (length != 0);
+	v = GetLastError();
+	int t = 0;
+	// =====
+	/*
+	errno_t err;
+	FILE *fileSrc, *fileRes;
+	err = _wfopen_s(&fileSrc, from.c_str(), L"rb");
+	if (err) {
+		// TODO
+		//ErrorMessage(L"Unable to open requested file!");
+		return;
+	}
+	err = _wfopen_s(&fileRes, to.c_str(), L"wb");
+	if (err) {
+		// TODO
+		// ErrorMessage(L"Unable to create new file!");
+		return;
+	}
+	unsigned int fsize, n;
+	fseek(fileSrc, 0, SEEK_END);
+	fsize = ftell(fileSrc);
+	rewind(fileSrc);
+	char *buffer;
+	n = fsize / 65536;
+	for (int i = 0; i < n; ++i)
+	{
+		buffer = new char[65536];
+		fread(buffer, 65536, sizeof(char), fileSrc);
+		fwrite(buffer, 65536, sizeof(char), fileRes);
+		delete[] buffer;
+	}
+	int rem = fsize - n * 65536;
+	buffer = new char[rem];
+	fread(buffer, rem, sizeof(char), fileSrc);
+	fwrite(buffer, rem, sizeof(char), fileRes);
+	delete[] buffer;
+	_fcloseall();
+	return false;
+	*/
+	return false;
+}
