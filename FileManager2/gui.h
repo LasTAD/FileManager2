@@ -97,3 +97,6 @@ void drawSelectRow(HANDLE hout, int pos, int color);
 
 // Ќаписать путь со смещением в основной строке, если она длиннее пол€
 void drawPath(HANDLE hout, wstring path, int shift);
+
+// «апускает HEX редактор, функцию по идее бы надо переделать в класс, но и так пусть работает
+void startEditor(HANDLE hout, wstring path);

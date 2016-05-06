@@ -212,7 +212,7 @@ void Console::work()
 			int b = _getch();
 			
 			if (b == 59) { // f1 help
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В McDonald’s лучше не есть", L"Сообщение от разработчиков");
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\n\nMcDonalds\n\nлучше\n\nне\n\nобедать", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
 				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
@@ -243,7 +243,8 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
-				copyFile(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", true);
+				//copyFile(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", true);
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Над функцией копирования ведется работа", L"Сообщение от разработчиков");
 			}
 			else if (b == 62) { // f4 delete
 				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
@@ -300,7 +301,8 @@ void Console::work()
 				drawFiles();
 			}
 			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved0 != 2) {
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
+				startEditor(hout, getPath() + files[pos]->cFileName);
+				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}
 			else {
 				// проверка на доступ, грубовато, но сойдет

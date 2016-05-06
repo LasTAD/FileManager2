@@ -2,15 +2,17 @@
 #include "files.h"
 #include <sstream>
 
-// Функция проверки имени файла/директории на правильность
-/*
-bool validateFilename(wstring str) {
-	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&str.find(L'\\') == wstring::npos &&
-		str.find(L':') == wstring::npos &&str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
-		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos &&str.find(L'/') == wstring::npos) return true;
-	return false;
+// функция для подсчета необходимого количества строк в окне
+short estimateString(wstring str, int onestrlen, short maxstrlen = -1) {
+	short counter = 1;
+	for (int i = 0, j = 1; i < str.length(); ++i, ++j) {
+		if (str[i] == '\n' || (j == onestrlen && i != str.length() - 1)) {
+			++counter;
+			j = 0;
+		}
+	}
+	return maxstrlen == -1 ? counter : min(maxstrlen, counter);
 }
-*/
 
 void showCursor(HANDLE hout, DWORD size)
 {
@@ -193,22 +195,80 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 
 void showDialogWindowOk(HANDLE hout, int color, int btColor, wstring text, wstring caption)
 {
-	CHAR_INFO old[64 * 7];
+	short strcount = estimateString(text, 60, 32);
+	CHAR_INFO *old = new CHAR_INFO[64 * (6 + strcount)];
 	SMALL_RECT sr;
-	sr.Top = 16;
+	sr.Top = 16 - strcount / 2;
 	sr.Left = 32;
 	sr.Right = 95;
-	sr.Bottom = 23;
-	ReadConsoleOutputW(hout, old, { 64, 7 }, { 0, 0 }, &sr);
+	sr.Bottom = 23 + strcount / 2;
+	ReadConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0, 0 }, &sr);
 
-	CHAR_INFO wnd[64 * 7];
-	drawWindow(wnd, 64, 7, color, caption);
-	drawText(wnd, 64 * 2 + 2, 60, text);
+	CHAR_INFO *wnd = new CHAR_INFO[64 * (6 + strcount)];
+
+	// рамка окна
+	drawWindow(wnd, 64, 6 + strcount, color, caption);
+	// ----------
+
+	// отрисовка многострочного текста
+	/*for (int i = 0, j = 0, p = 0, c = 0; i < text.length(); ++i, ++j) {
+		if (j == 60) {
+			wstring data = text.substr(p, j);
+			p = i;
+			j = 0;
+			++c;
+			drawText(wnd, 64 * (1 + c) + 2, 60, data);
+		}
+		else if (text.length() - 1 == i) {
+			wstring data = text.substr(p, j+1);
+			p = i;
+			j = 0;
+			++c;
+			drawText(wnd, 64 * (1 + c) + 2, 60, data);
+		}
+		else if (text[i] == '\n') {
+			wstring data = text.substr(p, j);
+			p = i + 1;
+			j = -1;
+			++c;
+			drawText(wnd, 64 * (1 + c) + 2, 60, data);
+		}
+	}*/
+	int sc = 1;
+	wstring tail = text;
+	while (tail.length() != 0) {
+		int p = tail.find(L'\n');
+		if (p != wstring::npos) {
+			if (p < 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, p));
+				tail = tail.substr(p + 1);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+		}
+		else {
+			if (tail.length() > 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail);
+				tail = L"";
+			}
+		}
+		++sc;
+	}
+	//drawText(wnd, 64 * 2 + 2, 60, text);
+	// -------------------------------
+
 	// кнопка
-	drawText(wnd, 64 * 4 + 3, 2, L"Ок");
-	fillColor(wnd, 64 * 4 + 2, 4, btColor);
+	drawText(wnd, 64 * (3 + strcount) + 3, 2, L"Ок");
+	fillColor(wnd, 64 * (3 + strcount) + 2, 4, btColor);
 	// ------
-	WriteConsoleOutputW(hout, wnd, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 0,0 }, &sr);
+	delete wnd;
 	while (true) {
 		int b = _getch();
 		if (b == 0) {
@@ -219,9 +279,12 @@ void showDialogWindowOk(HANDLE hout, int color, int btColor, wstring text, wstri
 		}
 		else {
 			if (b == 13) break;
+			if (b == 27) break;
 		}
+		
 	}
-	WriteConsoleOutputW(hout, old, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0,0 }, &sr);
+	delete old;
 }
 
 void showDialogWindowErrorOk(HANDLE hout, wstring text, wstring caption)
@@ -438,21 +501,21 @@ void drawWindowFM(HANDLE hout)
 	for (int i = 1; i < 127; ++i) { buf[i].Char.UnicodeChar = 9552; }
 	buf[127].Char.UnicodeChar = 9559;
 	drawText(buf, 2, 6, L" Path ");
-	fillColor(buf, 2, 6, TextGreen | BgBlack);
+	fillColor(buf, 2, 6, TextLightGreen | BgBlack); // Цветовая схема
 	buf[128].Char.UnicodeChar = buf[128 + 127].Char.UnicodeChar = 9553;
 	// --- top ---
 	buf[0 + 256].Char.UnicodeChar = 9568;//56
 	for (int i = 1; i < 85; ++i) { buf[i + 256].Char.UnicodeChar = 9552; }
 	drawText(buf, 2 + 256, 6, L" Name ");
-	fillColor(buf, 2 + 256, 6, TextGreen | BgBlack);
+	fillColor(buf, 2 + 256, 6, TextLightGreen | BgBlack); // Цветовая схема
 	buf[85 + 256].Char.UnicodeChar = 9574;
 	for (int i = 86; i < 106; ++i) { buf[i + 256].Char.UnicodeChar = 9552; }
 	drawText(buf, 87 + 256, 6, L" Size ");
-	fillColor(buf, 87 + 256, 6, TextGreen | BgBlack);
+	fillColor(buf, 87 + 256, 6, TextLightGreen | BgBlack); // Цветовая схема
 	buf[106 + 256].Char.UnicodeChar = 9574;
 	for (int i = 107; i < 127; ++i) { buf[i + 256].Char.UnicodeChar = 9552; }
 	drawText(buf, 108 + 256, 6, L" Type ");
-	fillColor(buf, 108 + 256, 6, TextGreen | BgBlack);
+	fillColor(buf, 108 + 256, 6, TextLightGreen | BgBlack); // Цветовая схема
 	buf[127 + 256].Char.UnicodeChar = 9571;//59
 	// -- files --
 	for (int i = 1; i < 36; ++i) {
@@ -550,4 +613,15 @@ void drawPath(HANDLE hout, wstring path, int shift)
 	drawText(buf, 0, 126, path, path.length() > 126 ? shift : 0);
 	WriteConsoleOutputW(hout, buf, { 126,1 }, { 0,0 }, &sr);
 	delete[] buf;
+}
+
+void startEditor(HANDLE hout, wstring path)
+{
+	HANDLE f = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f == INVALID_HANDLE_VALUE) {
+		DWORD e = GetLastError();
+		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка");
+		return;
+	}
+	CloseHandle(f);
 }
