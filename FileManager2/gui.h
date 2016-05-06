@@ -70,6 +70,9 @@ void fillColor(CHAR_INFO* buf, int from, int length, int color);
 // Показать окно выбора (да/нет)
 bool showDialogWindowYN(HANDLE hout, wstring text = L"", wstring caption = L"");
 
+// Показать окно выбора (да/нет/отмена)
+int showDialogWindowYNC(HANDLE hout, wstring text, wstring caption, int def = 0);
+
 // Показать окно информации (ок)
 void showDialogWindowOk(HANDLE hout, int color, int btColor, wstring text = L"", wstring caption = L"");
 
