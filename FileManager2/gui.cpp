@@ -43,6 +43,62 @@ wstring intToHexString(int i, int length = 0) {
 	return wstring(buf);
 }
 
+// функция для преобразования шестнадцатеричного в числе
+int stringToInt(wstring s) {
+	int n = 0;
+	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
+		s = s.substr(2);
+		// count
+		int m = 1;
+		for (int i = (int)s.length() - 1; i > -1; --i) {
+			if (s[i] >= '0' && s[i] <= '9') {
+				n += (s[i] - '0') * m;
+				m *= 16;
+			}
+			else if (s[i] >= 'a' && s[i] <= 'f') {
+				n += (s[i] - 'a' + 10) * m;
+				m *= 16;
+			}
+			else if (s[i] >= 'A' && s[i] <= 'F') {
+				n += (s[i] - 'A' + 10) * m;
+				m *= 16;
+			}
+		}
+	}
+	else { // dec
+		// count
+		int m = 1;
+		for (int i = (int)s.length() - 1; i > -1; --i) {
+			if (s[i] >= '0' && s[i] <= '9') {
+				n += (s[i] - '0') * m;
+				m *= 10;
+			}
+		}
+	}
+	return n;
+}
+
+bool validateInputAddress(wstring s) {
+	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
+		s = s.substr(2);
+		// check
+		for (int i = 0; i < s.length(); ++i) {
+			if (!((s[i] >= '0' && s[i] <= '9') || (s[i] >= 'a' && s[i] <= 'f') || (s[i] >= 'A' && s[i] <= 'F'))) {
+				return false;
+			}
+		}
+	}
+	else { // dec
+		// check
+		for (int i = 0; i < s.length(); ++i) {
+			if (!(s[i] >= '0' && s[i] <= '9')) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 void showCursor(HANDLE hout, DWORD size)
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -532,7 +588,7 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 					break;
 				}
 				else {
-					showDialogWindowErrorOk(hout, L"Имя файла пустое или содержит недопустимые символы", L"Ошибка");
+					showDialogWindowErrorOk(hout, L"Неверный ввод", L"Ошибка");
 				}
 			}
 			// ------------------------
@@ -718,59 +774,88 @@ void drawPath(HANDLE hout, wstring path, int shift)
 void drawEditorTable(CHAR_INFO* buf, int page = 0) {
 	for (int i = 0; i < 16; ++i) {
 		drawText(buf, 82 * 2 + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, intToHexString(i, 2));
-		//fillColor(buf, 82 * 2 + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, TextWhite | BgGreen);
+		fillColor(buf, 82 * 2 + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, TextRed | BgLightCyan);
 	}
 	for (int i = 0; i < 29; ++i) {
 		drawText(buf, 82 * (i + 3) + 2, 10, intToHexString(i*16 + page*29*16, 10));
-		//fillColor(buf, 82 * (i + 3) + 2, 10, TextWhite | BgGreen);
+		fillColor(buf, 82 * (i + 3) + 2, 10, TextRed | BgLightCyan);
 	}
 }
 
-void drawEditorBody(CHAR_INFO* buf, unsigned char *bytes, unsigned long long len, int page = 0) {
+// позицию передавать абсолютную
+void drawEditorBody(CHAR_INFO* buf, unsigned char *bytes, unsigned long long len, int page = 0, int posx = 0, int posy = 0) {
 	int c = page * 29 * 16;
-		for (int j = 0; j < 29; ++j) {
-			for (int i = 0; i < 16; ++i) {
+	for (int j = 0; j < 29; ++j) {
+		for (int i = 0; i < 16; ++i) {
 			if (c < len) {
 				drawText(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, intToHexString(bytes[c], 2));
 				wchar_t b[2];
 				b[0] = bytes[c];
 				if (b[0] < 32) b[0] = L'.';
 				b[1] = 0;
-				drawText(buf, 82 * (j + 3) + 4 + 10 + i + 50, 2, b);
+				drawText(buf, 82 * (j + 3) + 4 + 10 + i + 50, 1, b);
 			}
 			else {
 				drawText(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, L"  ");
 				wchar_t b[2];
 				b[0] = L' ';
 				b[1] = 0;
-				drawText(buf, 82 * (j + 3) + 4 + 10 + i + 50, 2, b);
+				drawText(buf, 82 * (j + 3) + 4 + 10 + i + 50, 1, b);
+			}
+			if (i == posx && j == posy % 29) {
+				fillColor(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, TextBlack | BgWhite);
+				fillColor(buf, 82 * (j + 3) + 4 + 10 + i + 50, 1, TextBlack | BgWhite);
+			}
+			else {
+				fillColor(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, TextWhite | BgGreen);
+				fillColor(buf, 82 * (j + 3) + 4 + 10 + i + 50, 1, TextWhite | BgGreen);
 			}
 			c++;
-			}
 		}
+	}
+}
+
+// позицию передавать относительную
+void drawEditorSelect(CHAR_INFO* buf, int page, int posx, int posy, int oldpage, int oldposx, int oldposy) {
+	fillColor(buf, 82 * (posy + 3) + 4 + 10 + posx * 3 + (posx > 7 ? 1 : 0), 2, TextBlack | BgWhite);
+	fillColor(buf, 82 * (posy + 3) + 4 + 10 + posx + 50, 1, TextBlack | BgWhite);
+
+	fillColor(buf, 82 * (oldposy + 3) + 4 + 10 + oldposx * 3 + (oldposx > 7 ? 1 : 0), 2, TextWhite | BgGreen);
+	fillColor(buf, 82 * (oldposy + 3) + 4 + 10 + oldposx + 50, 1, TextWhite | BgGreen);
 }
 
 void startEditor(HANDLE hout, wstring path) {
 	HANDLE f = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (f == INVALID_HANDLE_VALUE) {
 		DWORD e = GetLastError();
-		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка");
+		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при открытии файла");
 		CloseHandle(f);
 		return;
 	}
 	DWORD sizeHigh = 0;
 	DWORD size = GetFileSize(f, &sizeHigh);
-	unsigned long long sizeSum = (sizeHigh * MAXDWORD) + size;
+	unsigned __int64 sizeSum = (sizeHigh * MAXDWORD) + size, sizeCounter = sizeSum;
 
 	unsigned char *buffer = (unsigned char*) malloc(sizeSum);
 	if (!buffer) {
-		showDialogWindowErrorOk(hout, L"Недостаточно памяти", L"Ошибка");
+		showDialogWindowErrorOk(hout, L"Недостаточно памяти для открытия файла", L"Ошибка при открытии файла");
 		CloseHandle(f);
 		return;
 	}
 
 	DWORD readed;
-	ReadFile(f, buffer, sizeSum, &readed, NULL);
+	unsigned char *bufferPointer = buffer;
+	while (sizeCounter != 0) {
+		if (!ReadFile(f, bufferPointer, sizeCounter, &readed, NULL)) {
+			DWORD e = GetLastError();
+			showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
+			CloseHandle(f);
+			free(buffer);
+			return;
+		}
+		sizeCounter -= readed;
+		bufferPointer += readed;
+	}
 
 	// показатели изменений
 	bool saveChanges = false;
@@ -797,21 +882,79 @@ void startEditor(HANDLE hout, wstring path) {
 		filename = path;
 	}
 	drawWindow(brd, 82, 36, TextWhite | BgGreen, L"HEX Editor - [" + filename + L"]");
+	drawText(brd, 82 * 34 + 2, 78, L"\u25cf ESC exit \u25cf ARROWS change position \u25cf F1 edit mode \u25cf F2 goto address");
 
-	drawEditorTable(brd); // ВРЕМЕННО
-	drawEditorBody(brd, buffer, sizeSum, 1);
+	drawEditorTable(brd);
+	drawEditorBody(brd, buffer, sizeSum, 0);
 
 	WriteConsoleOutputW(hout, brd, { 82, 36 }, { 0,0 }, &brdr);
-	delete brd;
 	// --------------
 
+	int posx = 0, posy = 0, page = 0, oldpage = page, oldx = posx, oldy = posy, globalpos = 0;
+	int cursor = 0; // позиция курсора в текущем редакторе
+	bool force = false;
+	int mode = 0;
+
+	showCursor(hout, 10);
 	while (true) {
+		setCursorPosition(hout, 37 + (posx > 7 ? 1 : 0) + posx * 3 + cursor, 5 + posy % 29);
 		int b = _getch();
 		if (b == 0) {
-
+			b = _getch();
+			if (b == 60) { // f2
+				auto input = showDialogWindowInputOkCancel(hout, L"Код адреса символа:", L"Ввод", validateInputAddress);
+				if (!input.canceled) {
+					if (input.data == L"") input.data = L"0";
+					int gps = stringToInt(input.data);
+					globalpos = gps > sizeSum - 1 ? gps : sizeSum - 1;
+					cursor = 0;
+					posy = globalpos / 16;
+					posx = globalpos % 16;
+				}
+				setCursorPosition(hout, 37 + (posx > 7 ? 1 : 0) + posx * 3 + cursor, 5 + posy % 29);
+				showCursor(hout, 10);
+			}
 		}
 		else if (b == 0xE0) {
-
+			b = _getch();
+			if (b == 72) {
+				if (posy > 0) {
+					posy--;
+					globalpos -= 16;
+				}
+			}
+			else if (b == 80) {
+				if (globalpos + 16 < sizeSum) {
+					posy++;
+					globalpos += 16;
+				}
+			}
+			else if (b == 75) {
+				if (!(posx == 0 && cursor == 0 && posy == 0)) {
+					cursor = abs((cursor - 1) % 2);
+					if (cursor == 1) {
+						posx--;
+						globalpos--;
+						if (posx < 0) {
+							posy--;
+							posx = 15;
+						}
+					}
+				}
+			}
+			else if (b == 77) {
+				if (!(globalpos == sizeSum - 1 && cursor == 1)) {
+					cursor = (cursor + 1) % 2;
+					if (cursor == 0) {
+						if (globalpos != sizeSum - 1) {
+							posx++;
+							globalpos++;
+							posy += posx / 16;
+							posx %= 16;
+						}
+					}
+				}
+			}
 		}
 		else if (b == 27) {
 			if (hasChanges) {
@@ -826,8 +969,90 @@ void startEditor(HANDLE hout, wstring path) {
 				}
 			}
 		}
+		else {
+			if (b >= '0' && b <= '9') {
+				if (cursor == 0) {
+					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b - '0');
+				}
+				else {
+					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b - '0';
+				}
+				force = true;
+			}
+			else if (b >= 'A' &&  b <= 'F') {
+				if (cursor == 0) {
+					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'A');
+				}
+				else {
+					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'A';
+				}
+				force = true;
+			}
+			else if (b >= 'a' &&  b <= 'f') {
+				if (cursor == 0) {
+					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'a');
+				}
+				else {
+					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'a';
+				}
+				force = true;
+			}
+		}
+		page = posy / 29;
+		if (oldpage != page || force) {
+			force = false;
+			drawEditorTable(brd, page); // ВРЕМЕННО
+			drawEditorBody(brd, buffer, sizeSum, page, posx, posy);
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { 0,0 }, &brdr);
+		}
+		else if (posx != oldx || posy != oldy) {
+			drawEditorSelect(brd, page, posx, posy % 29, oldpage, oldx, oldy % 29);
+			// now
+			SMALL_RECT selr;
+			selr.Left = 23 + 14 + (posx > 7 ? 1 : 0) + posx * 3;
+			selr.Right = selr.Left + 2;
+			selr.Top = 2 + 3 + posy % 29;
+			selr.Bottom = selr.Top + 2;
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { selr.Left - 23, selr.Top - 2 }, &selr);
+			// r block now
+			selr.Left = 23 + 64 + posx;
+			selr.Right = selr.Left + 1;
+			selr.Top = 2 + 3 + posy % 29;
+			selr.Bottom = selr.Top + 2;
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { selr.Left - 23, selr.Top - 2 }, &selr);
+			// old
+			selr.Left = 23 + 14 + (oldx > 7 ? 1 : 0) + oldx * 3;
+			selr.Right = selr.Left + 2;
+			selr.Top = 2 + 3 + oldy % 29;
+			selr.Bottom = selr.Top + 2;
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { selr.Left - 23, selr.Top - 2 }, &selr);
+			// r block old
+			selr.Left = 23 + 64 + oldx;
+			selr.Right = selr.Left + 1;
+			selr.Top = 2 + 3 + oldy % 29;
+			selr.Bottom = selr.Top + 2;
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { selr.Left - 23, selr.Top - 2 }, &selr);
+		}
+		oldpage = page;
+		oldx = posx;
+		oldy = posy;
 	}
-
+	delete brd;
+	hideCursor(hout);
+	// сохранение
+	if (saveChanges) {
+		SetFilePointer(f, 0, 0, FILE_BEGIN);
+		DWORD written;
+		sizeCounter = sizeSum;
+		while (sizeCounter != 0) {
+			if (!WriteFile(f, buffer, sizeCounter, &written, NULL)) {
+				DWORD e = GetLastError();
+				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при записи файла");
+				break;
+			}
+			sizeCounter -= written;
+		}
+	}
 	// очистка
 	CloseHandle(f);
 	free(buffer);

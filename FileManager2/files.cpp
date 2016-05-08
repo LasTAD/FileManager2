@@ -53,9 +53,9 @@ celements countFiles(wstring path)
 
 wstring errorCodeToString(DWORD code)
 {
-	wchar_t buf[62];
+	wchar_t buf[600];
 	FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, code,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, 62, NULL);
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, 600, NULL);
 	wchar_t *p = wcsstr(buf, L"\r");
 	if (p) {
 		*p = 0;
