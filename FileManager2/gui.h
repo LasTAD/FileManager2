@@ -58,11 +58,8 @@ void setCursorPosition(HANDLE hout, short x, short y);
 // Нарисовать рамку для окна
 void drawWindow(CHAR_INFO* buf, int width, int height, int color, wstring caption = L"");
 
-// Написать текст с позиции в массиве с ограниченной длиной в одну строку
-void drawText(CHAR_INFO* buf, int from, int length, wstring text);
-
 // Написать текст с позиции в массиве с ограниченной длиной в одну строку с заданной позиции в строке
-void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom);
+void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom = 0);
 
 // Установить цвет в заданных позициях
 void fillColor(CHAR_INFO* buf, int from, int length, int color);
@@ -103,3 +100,9 @@ void drawPath(HANDLE hout, wstring path, int shift);
 
 // Запускает HEX редактор, функцию по идее бы надо переделать в класс, но и так пусть работает
 void startEditor(HANDLE hout, wstring path);
+
+// Пишет строку состояния
+void showStateString(wstring state);
+
+// Скрывает строку состояния
+void hideStateString();

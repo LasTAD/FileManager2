@@ -155,7 +155,7 @@ void Console::work()
 		if (b == 0xE0) {
 			b = _getch();
 
-			// логика перемещения по папкам
+#pragma region
 			if (b == 72) {
 				pos--;
 				updatePages();
@@ -182,9 +182,9 @@ void Console::work()
 				updatePages();
 				drawFiles();
 			}
-			// ----------------------------
+#pragma endregion Логика перемещения по папкам
 
-			// логика пути, если он длинный
+#pragma region
 			else if (b == 75) {
 				size_t size = getPath().size();
 				if (size > 126 && path_shift > 0) --path_shift;
@@ -206,13 +206,13 @@ void Console::work()
 				path_shift = size - 126;
 				drawPath(hout, getPath(), path_shift);
 			}
-			// -----------------------------
+#pragma endregion Логика просмотра всего пути в строке
 		}
 		else if (b == 0) {
 			int b = _getch();
 			
 			if (b == 59) { // f1 help
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\n\nMcDonalds\n\nлучше\n\nне\n\nобедать", L"Сообщение от разработчиков");
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\nMcDonalds\nлучше\nне\nобедать", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
 				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
@@ -223,7 +223,9 @@ void Console::work()
 				if (!input.canceled) {
 					wstring oldp = getPath() + files[pos]->cFileName;
 					wstring newp = getPath() + input.data;
+					showStateString(L"Renaming element...");
 					BOOL r = MoveFileW(oldp.c_str(), newp.c_str());
+					hideStateString();
 					if (!r) {
 						DWORD val = GetLastError();
 						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
@@ -252,13 +254,14 @@ void Console::work()
 					continue;
 				}
 				if (showDialogWindowYN(hout, L"Действительно удалить этот элемент?", L"Вопрос")) {
+					showStateString(L"Deleting element...");
 					bool r = removeFile(getPath() + files[pos]->cFileName, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-					
 					if (!r) {
-						DWORD val = GetLastError();
-						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+						hideStateString();
+						showDialogWindowErrorOk(hout, L"Element: " + getLastErrorFilename() + L'\n' + errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
 					else {
+						hideStateString();
 						int oldpos = pos;
 						updateFiles();
 						pos = oldpos--;
@@ -274,7 +277,9 @@ void Console::work()
 				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Переименование", validateFilename);
 				if (!input.canceled) {
+					showStateString(L"Creating directory...");
 					BOOL r = CreateDirectoryW(wstring(getPath() + input.data).c_str(), NULL);
+					hideStateString();
 					if (!r) {
 						DWORD val = GetLastError();
 						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");

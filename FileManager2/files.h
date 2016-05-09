@@ -36,3 +36,11 @@ bool removeFile(wstring path, bool isDir);
 
 // копирует все содержимое
 bool copyFile(wstring from, wstring to, bool isDir);
+
+void setLastErrorFilename(wstring name);
+
+wstring getLastErrorFilename();
+
+void setLastErrorCode(DWORD code);
+
+DWORD getLastErrorCode();

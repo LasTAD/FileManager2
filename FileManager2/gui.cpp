@@ -1,10 +1,15 @@
 #include "gui.h"
 #include "files.h"
+#include "types.h"
+#include <exception>
 #include <sstream>
 
+wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIR";
+
 // функция для подсчета необходимого количества строк в окне
-short estimateString(wstring str, int onestrlen, short maxstrlen = -1) {
-	short counter = 1;
+// проверена, оптимизирована
+int estimateString(wstring str, int onestrlen, int maxstrlen = -1) {
+	int counter = 1;
 	for (int i = 0, j = 1; i < str.length(); ++i, ++j) {
 		if (str[i] == '\n' || (j == onestrlen && i != str.length() - 1)) {
 			++counter;
@@ -14,43 +19,33 @@ short estimateString(wstring str, int onestrlen, short maxstrlen = -1) {
 	return maxstrlen == -1 ? counter : min(maxstrlen, counter);
 }
 
-// функция для преобразования шестнадцатеричного в строку
-wstring intToHexString(int i, int length = 0) {
-	wchar_t buf[128];
-	int c = 0;
-	while (i > 0) {
-		int m = i % 16;
-		if (m < 10) {
-			buf[c++] = L'0' + m;
-		}
-		else {
-			buf[c++] = L'A' + m - 10;
-		}
-		i /= 16;
+// функция для преобразования числа в шестнадцатеричную строку; неизвестно, как поведет себя с вещественными типами
+// проверена, оптимизирована
+template<typename ___int>
+wstring intToHexString(___int i, int length = 0) {
+	wchar_t *buf = new wchar_t[max(17, length)];
+	wstring format;
+	if (length == 0) {
+		format = L"%X";
 	}
-
-	while (c < length) {
-		buf[c++] = L'0';
+	else {
+		format = L"%0" + to_wstring(length) + L"X";
 	}
-	
-	for (int i = 0; i < c / 2; ++i) {
-		wchar_t t = buf[i];
-		buf[i] = buf[c - i - 1];
-		buf[c - i - 1] = t;
-	}
-	
-	buf[c] = L'\0';
-	return wstring(buf);
+	_snwprintf_s(buf, max(17, length), max(17, length), format.c_str(), i);
+	format = buf;
+	delete buf;
+	return format;
 }
 
-// функция для преобразования шестнадцатеричного в числе
-int stringToInt(wstring s) {
-	int n = 0;
+// функция для преобразования шестнадцатеричного в число
+// проверена
+uint64 stringToInt(wstring s) {
+	uint64 n = 0;
 	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
 		s = s.substr(2);
 		// count
-		int m = 1;
-		for (int i = (int)s.length() - 1; i > -1; --i) {
+		uint64 m = 1;
+		for (size_t i = s.length() - 1; i > -1; --i) {
 			if (s[i] >= '0' && s[i] <= '9') {
 				n += (s[i] - '0') * m;
 				m *= 16;
@@ -63,26 +58,34 @@ int stringToInt(wstring s) {
 				n += (s[i] - 'A' + 10) * m;
 				m *= 16;
 			}
+			else {
+				throw exception("stringToInt: invalid string");
+			}
 		}
 	}
 	else { // dec
 		// count
-		int m = 1;
-		for (int i = (int)s.length() - 1; i > -1; --i) {
+		uint64 m = 1;
+		for (size_t i = s.length() - 1; i > -1; --i) {
 			if (s[i] >= '0' && s[i] <= '9') {
 				n += (s[i] - '0') * m;
 				m *= 10;
+			}
+			else {
+				throw exception("stringToInt: invalid string");
 			}
 		}
 	}
 	return n;
 }
 
+// функция проверки введенного адреса
+// проверена
 bool validateInputAddress(wstring s) {
 	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
 		s = s.substr(2);
 		// check
-		for (int i = 0; i < s.length(); ++i) {
+		for (size_t i = 0; i < s.length(); ++i) {
 			if (!((s[i] >= '0' && s[i] <= '9') || (s[i] >= 'a' && s[i] <= 'f') || (s[i] >= 'A' && s[i] <= 'F'))) {
 				return false;
 			}
@@ -90,7 +93,7 @@ bool validateInputAddress(wstring s) {
 	}
 	else { // dec
 		// check
-		for (int i = 0; i < s.length(); ++i) {
+		for (size_t i = 0; i < s.length(); ++i) {
 			if (!(s[i] >= '0' && s[i] <= '9')) {
 				return false;
 			}
@@ -99,6 +102,7 @@ bool validateInputAddress(wstring s) {
 	return true;
 }
 
+// проверена
 void showCursor(HANDLE hout, DWORD size)
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -107,6 +111,7 @@ void showCursor(HANDLE hout, DWORD size)
 	SetConsoleCursorInfo(hout, &cci);
 }
 
+// проверена
 void hideCursor(HANDLE hout)
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -115,6 +120,7 @@ void hideCursor(HANDLE hout)
 	SetConsoleCursorInfo(hout, &cci);
 }
 
+// проверена
 void setCursorPosition(HANDLE hout, short x, short y)
 {
 	SetConsoleCursorPosition(hout, { x,y });
@@ -182,22 +188,11 @@ void drawWindow(CHAR_INFO* buf, int width, int height, int color, wstring captio
 	buf[width*height - 1].Attributes = color;
 }
 
-void drawText(CHAR_INFO* buf, int from, int length, wstring text)
-{
-	for (int i = 0; i < length; i++) {
-		if (i > (int)text.length() - 1) {
-			buf[from + i].Char.UnicodeChar = L' ';
-		}
-		else {
-			buf[from + i].Char.UnicodeChar = text[i];
-		}
-	}
-}
-
+// проверена
 void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom)
 {
-	for (int i = 0; i < length; i++) {
-		if (i+textFrom >(int)text.length() - 1) {
+	for (size_t i = 0; i < length; i++) {
+		if ((i+textFrom+1) > text.length()) {
 			buf[from + i].Char.UnicodeChar = L' ';
 		}
 		else {
@@ -206,6 +201,7 @@ void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom)
 	}
 }
 
+// проверена
 void fillColor(CHAR_INFO* buf, int from, int length, int color)
 {
 	for (int i = 0; i < length; ++i) {
@@ -213,6 +209,7 @@ void fillColor(CHAR_INFO* buf, int from, int length, int color)
 	}
 }
 
+// нуждается в доработке (мультилайн)
 bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 {
 	// значение выбранной кнопочки
@@ -278,6 +275,7 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 	return key;
 }
 
+// нуждается в доработке (мультилайн)
 int showDialogWindowYNC(HANDLE hout, wstring text, wstring caption, int def)
 {
 	// значение выбранной кнопочки
@@ -367,29 +365,6 @@ void showDialogWindowOk(HANDLE hout, int color, int btColor, wstring text, wstri
 	// ----------
 
 	// отрисовка многострочного текста
-	/*for (int i = 0, j = 0, p = 0, c = 0; i < text.length(); ++i, ++j) {
-		if (j == 60) {
-			wstring data = text.substr(p, j);
-			p = i;
-			j = 0;
-			++c;
-			drawText(wnd, 64 * (1 + c) + 2, 60, data);
-		}
-		else if (text.length() - 1 == i) {
-			wstring data = text.substr(p, j+1);
-			p = i;
-			j = 0;
-			++c;
-			drawText(wnd, 64 * (1 + c) + 2, 60, data);
-		}
-		else if (text[i] == '\n') {
-			wstring data = text.substr(p, j);
-			p = i + 1;
-			j = -1;
-			++c;
-			drawText(wnd, 64 * (1 + c) + 2, 60, data);
-		}
-	}*/
 	int sc = 1;
 	wstring tail = text;
 	while (tail.length() != 0) {
@@ -416,7 +391,6 @@ void showDialogWindowOk(HANDLE hout, int color, int btColor, wstring text, wstri
 		}
 		++sc;
 	}
-	//drawText(wnd, 64 * 2 + 2, 60, text);
 	// -------------------------------
 
 	// кнопка
@@ -448,6 +422,7 @@ void showDialogWindowErrorOk(HANDLE hout, wstring text, wstring caption)
 	showDialogWindowOk(hout, TextWhite | BgMagenta, TextWhite | BgLightMagenta, text, caption);
 }
 
+// нуждается в доработке (мультилайн)
 _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption, validateInput f)
 {
 	// значение выбранной кнопочки
@@ -643,6 +618,7 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 	return { data == L"" || !key, data };
 }
 
+// проверена
 void drawWindowFM(HANDLE hout)
 {
 	CHAR_INFO *buf = new CHAR_INFO[128 * 40];
@@ -689,13 +665,15 @@ void drawWindowFM(HANDLE hout)
 	for (int i = 107; i < 127; ++i) { buf[38 * 128 + i].Char.UnicodeChar = 9552; }
 	buf[39 * 128 - 1].Char.UnicodeChar = 9565;
 	// --- help ---
-	drawText(buf, 39 * 128, 128, L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIR");
+	fillColor(buf, 39 * 128, 128, BgGreen | TextWhite);
+	drawText(buf, 39 * 128, 128, HELP_STRING);
 	// draw
 	SMALL_RECT sr{ 0,0,128,40 };
 	WriteConsoleOutputW(hout, buf, { 128, 40 }, { 0,0 }, &sr);
 	delete[] buf;
 }
 
+// нуждается в доработке (отображение размера)
 void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int last, int pos)
 {
 	CHAR_INFO *names = new CHAR_INFO[84 * 35], *sizes = new CHAR_INFO[20 * 35], *types = new CHAR_INFO[20 * 35];
@@ -715,9 +693,8 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
 		if (files[f]->dwReserved0 != 1 && files[f]->dwReserved0 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-			unsigned long long size = ((files[f]->nFileSizeHigh * MAXDWORD) + files[f]->nFileSizeLow);
-			wstringstream wss; wss << size << L" B";
-			drawText(sizes, i * 20, 20, wss.str());
+			uint64 size = (((uint64)(files[f]->nFileSizeHigh) * ((uint64)MAXDWORD + 1U)) + files[f]->nFileSizeLow);
+			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			if (files[f]->dwReserved1 == 1) {
@@ -748,6 +725,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 	delete[] types;
 }
 
+// проверена
 void drawSelectRow(HANDLE hout, int pos, int color)
 {
 	CHAR_INFO *buf = new CHAR_INFO[126];
@@ -761,6 +739,7 @@ void drawSelectRow(HANDLE hout, int pos, int color)
 	delete[] buf;
 }
 
+// проверена
 void drawPath(HANDLE hout, wstring path, int shift)
 {
 	CHAR_INFO *buf = new CHAR_INFO[126];
@@ -771,7 +750,9 @@ void drawPath(HANDLE hout, wstring path, int shift)
 	delete[] buf;
 }
 
-void drawEditorTable(CHAR_INFO* buf, int page = 0) {
+// функция для отрисовки таблицы адресов в буфер
+// проверена, возможно нужно посчитать константы
+void drawEditorTable(CHAR_INFO* buf, uint64 page = 0) {
 	for (int i = 0; i < 16; ++i) {
 		drawText(buf, 82 * 2 + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, intToHexString(i, 2));
 		fillColor(buf, 82 * 2 + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, TextRed | BgLightCyan);
@@ -782,13 +763,14 @@ void drawEditorTable(CHAR_INFO* buf, int page = 0) {
 	}
 }
 
-// позицию передавать абсолютную
-void drawEditorBody(CHAR_INFO* buf, unsigned char *bytes, unsigned long long len, int page = 0, int posx = 0, int posy = 0) {
-	int c = page * 29 * 16;
+// функция для отрисовки байтов в буфер, позицию передавать абсолютную
+// проверена, возможно нужно посчитать константы
+void drawEditorBody(CHAR_INFO* buf, unsigned char *bytes, uint64 len, int posx = 0, uint64 posy = 0) {
+	int c = 0;
 	for (int j = 0; j < 29; ++j) {
 		for (int i = 0; i < 16; ++i) {
 			if (c < len) {
-				drawText(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, intToHexString(bytes[c], 2));
+				drawText(buf, 82 * (j + 3) + 4 + 10 + i * 3 + (i > 7 ? 1 : 0), 2, intToHexString(bytes[c], 2u));
 				wchar_t b[2];
 				b[0] = bytes[c];
 				if (b[0] < 32) b[0] = L'.';
@@ -815,8 +797,9 @@ void drawEditorBody(CHAR_INFO* buf, unsigned char *bytes, unsigned long long len
 	}
 }
 
-// позицию передавать относительную
-void drawEditorSelect(CHAR_INFO* buf, int page, int posx, int posy, int oldpage, int oldposx, int oldposy) {
+// функция перерисовки выделения
+// проверена, возможно нужно посчитать константы
+void drawEditorSelect(CHAR_INFO* buf, int posx, int posy, int oldpage, int oldposx, int oldposy) {
 	fillColor(buf, 82 * (posy + 3) + 4 + 10 + posx * 3 + (posx > 7 ? 1 : 0), 2, TextBlack | BgWhite);
 	fillColor(buf, 82 * (posy + 3) + 4 + 10 + posx + 50, 1, TextBlack | BgWhite);
 
@@ -825,37 +808,60 @@ void drawEditorSelect(CHAR_INFO* buf, int page, int posx, int posy, int oldpage,
 }
 
 void startEditor(HANDLE hout, wstring path) {
+	showStateString(L"Opening file...");
 	HANDLE f = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (f == INVALID_HANDLE_VALUE) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при открытии файла");
 		CloseHandle(f);
+		hideStateString();
 		return;
 	}
-	DWORD sizeHigh = 0;
-	DWORD size = GetFileSize(f, &sizeHigh);
-	unsigned __int64 sizeSum = (sizeHigh * MAXDWORD) + size, sizeCounter = sizeSum;
 
-	unsigned char *buffer = (unsigned char*) malloc(sizeSum);
+	// чтение размера, все отлично
+	DWORD sizeHigh_tpl;
+	DWORD size = GetFileSize(f, &sizeHigh_tpl);
+	unsigned __int64 sizeHigh = sizeHigh_tpl;
+	unsigned __int64 sizeSum = (sizeHigh * (0xFFFFFFFFu + 1)) + size, sizeCounter = sizeSum;
+	// ---------------------------
+
+	// выделение памяти, все супер
+	showStateString(L"Allocating memory...");
+	unsigned char *buffer = (unsigned char*) malloc(29 * 16);
 	if (!buffer) {
 		showDialogWindowErrorOk(hout, L"Недостаточно памяти для открытия файла", L"Ошибка при открытии файла");
 		CloseHandle(f);
+		hideStateString();
 		return;
 	}
+	// ---------------------------
 
+	// чтение файла
+	showStateString(L"Reading file");
 	DWORD readed;
-	unsigned char *bufferPointer = buffer;
+	/*unsigned char *bufferPointer = buffer;
 	while (sizeCounter != 0) {
-		if (!ReadFile(f, bufferPointer, sizeCounter, &readed, NULL)) {
+		if (!ReadFile(f, bufferPointer, min(1024 * 1024, sizeCounter), &readed, NULL)) {
 			DWORD e = GetLastError();
 			showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
 			CloseHandle(f);
 			free(buffer);
+			hideStateString();
 			return;
 		}
 		sizeCounter -= readed;
 		bufferPointer += readed;
+	}*/
+	if (!ReadFile(f, buffer, min (29 * 16, sizeSum), &readed, NULL)) {
+		DWORD e = GetLastError();
+		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
+		CloseHandle(f);
+		free(buffer);
+		hideStateString();
+		return;
 	}
+	hideStateString();
+	// ------------
 
 	// показатели изменений
 	bool saveChanges = false;
@@ -882,41 +888,30 @@ void startEditor(HANDLE hout, wstring path) {
 		filename = path;
 	}
 	drawWindow(brd, 82, 36, TextWhite | BgGreen, L"HEX Editor - [" + filename + L"]");
-	drawText(brd, 82 * 34 + 2, 78, L"\u25cf ESC exit \u25cf ARROWS change position \u25cf F1 edit mode \u25cf F2 goto address");
-
+	drawText(brd, 82 * 33 + 2, 78, L"\u25cf HOME to first pos \u25cf END to last pos");
+	drawText(brd, 82 * 34 + 2, 78, L"\u25cf ESC exit \u25cf ARROWS change position \u25cf TAB edit mode \u25cf ENTER goto address");
 	drawEditorTable(brd);
-	drawEditorBody(brd, buffer, sizeSum, 0);
+	drawEditorBody(brd, buffer, sizeSum);
 
 	WriteConsoleOutputW(hout, brd, { 82, 36 }, { 0,0 }, &brdr);
 	// --------------
 
-	int posx = 0, posy = 0, page = 0, oldpage = page, oldx = posx, oldy = posy, globalpos = 0;
+	int posx = 0, oldx = posx;// , posy = 0, oldy = posy, globalpos = 0;
 	int cursor = 0; // позиция курсора в текущем редакторе
 	bool force = false;
 	int mode = 0;
+	unsigned long long posy = 0, oldy = posy, globalpos = 0, page = 0, oldpage = page;
 
-	showCursor(hout, 10);
+	showCursor(hout, 100);
 	while (true) {
-		setCursorPosition(hout, 37 + (posx > 7 ? 1 : 0) + posx * 3 + cursor, 5 + posy % 29);
+		setCursorPosition(hout, 37 + (mode == 0 ? (posx > 7 ? 1 : 0) + posx * 3 + cursor : 50 + posx), 5 + posy % 29);
 		int b = _getch();
 		if (b == 0) {
 			b = _getch();
-			if (b == 60) { // f2
-				auto input = showDialogWindowInputOkCancel(hout, L"Код адреса символа:", L"Ввод", validateInputAddress);
-				if (!input.canceled) {
-					if (input.data == L"") input.data = L"0";
-					int gps = stringToInt(input.data);
-					globalpos = gps > sizeSum - 1 ? gps : sizeSum - 1;
-					cursor = 0;
-					posy = globalpos / 16;
-					posx = globalpos % 16;
-				}
-				setCursorPosition(hout, 37 + (posx > 7 ? 1 : 0) + posx * 3 + cursor, 5 + posy % 29);
-				showCursor(hout, 10);
-			}
 		}
 		else if (b == 0xE0) {
 			b = _getch();
+#pragma region
 			if (b == 72) {
 				if (posy > 0) {
 					posy--;
@@ -930,30 +925,57 @@ void startEditor(HANDLE hout, wstring path) {
 				}
 			}
 			else if (b == 75) {
-				if (!(posx == 0 && cursor == 0 && posy == 0)) {
-					cursor = abs((cursor - 1) % 2);
-					if (cursor == 1) {
-						posx--;
-						globalpos--;
-						if (posx < 0) {
-							posy--;
-							posx = 15;
+				if (mode == 0) {
+					if (!(posx == 0 && cursor == 0 && posy == 0)) {
+						cursor = abs((cursor - 1) % 2);
+						if (cursor == 1) {
+							posx--;
+							globalpos--;
+							if (posx < 0) {
+								posy--;
+								posx = 15;
+							}
 						}
+					}
+				}
+				else {
+					posx--;
+					globalpos--;
+					if (posx < 0) {
+						posy--;
+						posx = 15;
 					}
 				}
 			}
 			else if (b == 77) {
-				if (!(globalpos == sizeSum - 1 && cursor == 1)) {
-					cursor = (cursor + 1) % 2;
-					if (cursor == 0) {
-						if (globalpos != sizeSum - 1) {
-							posx++;
-							globalpos++;
-							posy += posx / 16;
-							posx %= 16;
+				if (mode == 0) {
+					if (!(globalpos == sizeSum - 1 && cursor == 1)) {
+						cursor = (cursor + 1) % 2;
+						if (cursor == 0) {
+							if (globalpos != sizeSum - 1) {
+								posx++;
+								globalpos++;
+								posy += posx / 16;
+								posx %= 16;
+							}
 						}
 					}
 				}
+				else {
+					if (globalpos != sizeSum - 1) {
+						posx++;
+						globalpos++;
+						posy += posx / 16;
+						posx %= 16;
+					}
+				}
+			}
+#pragma endregion Логика перемещения стрелочек
+			else if (b == 71) {
+				globalpos = 0;
+			}
+			else if (b == 79) {
+				globalpos = sizeSum - 1;
 			}
 		}
 		else if (b == 27) {
@@ -969,44 +991,93 @@ void startEditor(HANDLE hout, wstring path) {
 				}
 			}
 		}
+		else if (b == 13) {
+			auto input = showDialogWindowInputOkCancel(hout, L"Код адреса символа:", L"Ввод", validateInputAddress);
+			if (!input.canceled) {
+				if (input.data == L"") input.data = L"0";
+				int gps = stringToInt(input.data);
+				globalpos = gps < sizeSum - 1 ? gps : sizeSum - 1;
+				cursor = 0;
+			}
+			setCursorPosition(hout, 37 + (mode == 0 ? (posx > 7 ? 1 : 0) + posx * 3 + cursor : 50 + posx), 5 + posy % 29);
+			showCursor(hout, 100);
+		}
+		else if (b == 9) {
+			mode = (mode + 1) % 2;
+		}
 		else {
-			if (b >= '0' && b <= '9') {
-				if (cursor == 0) {
-					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b - '0');
+#pragma region
+			if (mode == 0) {
+				if (b >= '0' && b <= '9') {
+					if (cursor == 0) {
+						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b - '0');
+					}
+					else {
+						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b - '0';
+					}
+					force = true;
 				}
-				else {
-					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b - '0';
+				else if (b >= 'A' &&  b <= 'F') {
+					if (cursor == 0) {
+						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'A');
+					}
+					else {
+						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'A';
+					}
+					force = true;
 				}
-				force = true;
+				else if (b >= 'a' &&  b <= 'f') {
+					if (cursor == 0) {
+						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'a');
+					}
+					else {
+						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'a';
+					}
+					force = true;
+				}
 			}
-			else if (b >= 'A' &&  b <= 'F') {
-				if (cursor == 0) {
-					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'A');
+			else {
+				if (b >= 32 && b <= 126) {
+					buffer[globalpos] = b;
+					force = true;
 				}
-				else {
-					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'A';
-				}
-				force = true;
 			}
-			else if (b >= 'a' &&  b <= 'f') {
-				if (cursor == 0) {
-					buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'a');
-				}
-				else {
-					buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'a';
-				}
-				force = true;
+#pragma endregion Логика смены символа
+		}
+		posx = globalpos % 16;
+		posy = globalpos / 16;
+		page = posy / 29;
+
+		if (oldpage != page) {
+			LARGE_INTEGER li;
+			li.QuadPart = page * 29 * 16;
+			SetFilePointer(f, li.LowPart, &li.HighPart, FILE_BEGIN);
+			if (!ReadFile(f, buffer, min(29 * 16, sizeSum - 1), &readed, NULL)) {
+				DWORD e = GetLastError();
+				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
+				CloseHandle(f);
+				free(buffer);
+				hideStateString();
+				return;
 			}
 		}
-		page = posy / 29;
+
 		if (oldpage != page || force) {
+#pragma region
 			force = false;
-			drawEditorTable(brd, page); // ВРЕМЕННО
-			drawEditorBody(brd, buffer, sizeSum, page, posx, posy);
-			WriteConsoleOutputW(hout, brd, { 82, 36 }, { 0,0 }, &brdr);
+			drawEditorTable(brd, page);
+			drawEditorBody(brd, buffer, readed, posx, posy);
+			SMALL_RECT dr;
+			dr.Top = 4;
+			dr.Left = 25;
+			dr.Right = 102;
+			dr.Bottom = 33;
+			WriteConsoleOutputW(hout, brd, { 82, 36 }, { 2,2 }, &dr);
+#pragma endregion Перерисовка при смене страницы
 		}
 		else if (posx != oldx || posy != oldy) {
-			drawEditorSelect(brd, page, posx, posy % 29, oldpage, oldx, oldy % 29);
+#pragma region
+			drawEditorSelect(brd, posx, posy % 29, oldpage, oldx, oldy % 29);
 			// now
 			SMALL_RECT selr;
 			selr.Left = 23 + 14 + (posx > 7 ? 1 : 0) + posx * 3;
@@ -1032,6 +1103,7 @@ void startEditor(HANDLE hout, wstring path) {
 			selr.Top = 2 + 3 + oldy % 29;
 			selr.Bottom = selr.Top + 2;
 			WriteConsoleOutputW(hout, brd, { 82, 36 }, { selr.Left - 23, selr.Top - 2 }, &selr);
+#pragma endregion Перерисовка при смене позиции
 		}
 		oldpage = page;
 		oldx = posx;
@@ -1040,6 +1112,7 @@ void startEditor(HANDLE hout, wstring path) {
 	delete brd;
 	hideCursor(hout);
 	// сохранение
+	showStateString(L"Saving changes...");
 	if (saveChanges) {
 		SetFilePointer(f, 0, 0, FILE_BEGIN);
 		DWORD written;
@@ -1053,10 +1126,46 @@ void startEditor(HANDLE hout, wstring path) {
 			sizeCounter -= written;
 		}
 	}
+	showStateString(L"Deallocating memory...");
 	// очистка
 	CloseHandle(f);
 	free(buffer);
+	hideStateString();
 	// -------
 	WriteConsoleOutputW(hout, old, { 82, 36 }, { 0,0 }, &brdr);
 	delete old;
+}
+
+// проверена
+void showStateString(wstring state)
+{
+	static bool initialized = false;
+	static CHAR_INFO buf[128];
+	static SMALL_RECT sr;
+	if (!initialized) {
+		fillColor(buf, 0, 128, BgGreen | TextWhite);
+		sr.Top = 39;
+		sr.Bottom = 40;
+		sr.Left = 0;
+		sr.Right = 128;
+	}
+	drawText(buf, 0, 128, state);
+	WriteConsoleOutputW(GetStdHandle(STD_OUTPUT_HANDLE), buf, { 128, 1 }, { 0,0 }, &sr);
+}
+
+// проверена
+void hideStateString()
+{
+	static bool initialized = false;
+	static CHAR_INFO buf[128];
+	static SMALL_RECT sr;
+	if (!initialized) {
+		fillColor(buf, 0, 128, BgGreen | TextWhite);
+		sr.Top = 39;
+		sr.Bottom = 40;
+		sr.Left = 0;
+		sr.Right = 128;
+	}
+	drawText(buf, 0, 128, HELP_STRING);
+	WriteConsoleOutputW(GetStdHandle(STD_OUTPUT_HANDLE), buf, { 128, 1 }, { 0,0 }, &sr);
 }

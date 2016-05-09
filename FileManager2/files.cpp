@@ -45,7 +45,6 @@ celements countFiles(wstring path)
 		if (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ++dirs;
 		else ++files;
 	} while (FindNextFileW(handle, data));
-	DWORD d = GetLastError();
 	FindClose(handle);
 	delete data;
 	return{ files, dirs };
@@ -84,10 +83,29 @@ bool removeFile(wstring path, bool isDir)
 			}
 		} while (FindNextFileW(handle, &data));
 		FindClose(handle);
-		return RemoveDirectoryW(path.c_str());
+		bool k = RemoveDirectoryW(path.c_str());
+		if (!k) {
+			setLastErrorCode(GetLastError());
+			setLastErrorFilename(path);
+		}
+		return k;
 	}
 	else {
-		return DeleteFileW(path.c_str());
+		DWORD at = GetFileAttributesW(path.c_str());
+		if (at & FILE_ATTRIBUTE_READONLY) {
+			at &= ~FILE_ATTRIBUTE_READONLY;
+			if (!SetFileAttributesW(path.c_str(), at)) {
+				setLastErrorCode(GetLastError());
+				setLastErrorFilename(path);
+				return false;
+			}
+		}
+		bool k = DeleteFileW(path.c_str());
+		if (!k) {
+			setLastErrorCode(GetLastError());
+			setLastErrorFilename(path);
+		}
+		return k;
 	}
 }
 /*
@@ -177,4 +195,30 @@ bool copyFile(wstring from, wstring to, bool isDir)
 	return false;
 	*/
 	return false;
+}
+
+static wstring globalErrorFilename = L"";
+static DWORD globalErrorCode = 0;
+
+void setLastErrorFilename(wstring name)
+{
+	globalErrorFilename = name;
+}
+
+wstring getLastErrorFilename()
+{
+	wstring n = globalErrorFilename;
+	globalErrorFilename = L"";
+	return n;
+}
+
+void setLastErrorCode(DWORD code) {
+	globalErrorCode = code;
+}
+
+DWORD getLastErrorCode()
+{
+	DWORD n = globalErrorCode;
+	globalErrorCode = 0;
+	return n;
 }
