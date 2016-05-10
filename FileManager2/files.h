@@ -35,7 +35,7 @@ wstring errorCodeToString(DWORD code);
 bool removeFile(wstring path, bool isDir);
 
 // копирует все содержимое
-bool copyDir(wstring from, wstring to, bool isDir);
+bool copyDir(wstring from, wstring to);
 
 bool _copy(wstring from, wstring to, bool isDir);
 

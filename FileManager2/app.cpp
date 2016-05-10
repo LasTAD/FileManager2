@@ -246,12 +246,12 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
-				/*auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии файла:", L"Копирование", validateFilename);
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии:", L"Копирование", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Copying...");
-					BOOL r = CreateDirectoryW(wstring(getPath() + input.data).c_str(), NULL);
+					BOOL k = _copy(getPath() + files[pos]->cFileName, input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 					hideStateString();
-					if (!r) {
+					if (!k) {
 						DWORD val = GetLastError();
 						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
 					}
@@ -266,8 +266,8 @@ void Console::work()
 						}
 						drawFiles(true);
 					}
-				}*/
-				_copy(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+				}
+				//_copy(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 			}
 
 			else if (b == 62) { // f4 delete

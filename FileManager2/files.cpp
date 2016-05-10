@@ -112,32 +112,16 @@ bool removeFile(wstring path, bool isDir)
 		return k;
 	}
 }
-/*
-bool copyDir(wstring src, wstring res)
-{
-	vector<PWIN32_FIND_DATAW> dirFiles;
-
-	if (!getFiles(src + L'\\', dirFiles)) {
-		return false;
-	}
-
-	for (int i = 0; i < dirFiles.size(); i++) {
-		if (dirFiles[i]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			CreateDir(res + L'\\' + dirFiles[i]->cFileName);
-			CreateDirectoryW()
-			_Copy(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
-		}
-		else
-			_CopyFile(src + L'\\' + dirFiles[i]->cFileName, res + L'\\' + dirFiles[i]->cFileName);
-		delete dirFiles[i];
-	}
-}
-*/
 
 bool _copy(wstring from, wstring to, bool isDir) {
 	if (isDir) {
 		CreateDirectoryW(to.c_str(), NULL);
-		copyDir(from, to,isDir);
+		bool k = copyDir(from, to);
+		if (!k) {
+			setLastErrorCode(GetLastError());
+			setLastErrorFilename(to);
+		}
+		return k;
 	}
 	else {
 		DWORD at = GetFileAttributesW(from.c_str());
@@ -158,9 +142,8 @@ bool _copy(wstring from, wstring to, bool isDir) {
 	}
 }
 
-bool copyDir(wstring from, wstring to, bool isDir)
+bool copyDir(wstring from, wstring to)
 {
-	if (isDir) {
 		WIN32_FIND_DATAW data;
 		HANDLE handle = FindFirstFileW(wstring(from + L"\\*.*").c_str(), &data);
 		if (handle == INVALID_HANDLE_VALUE) {
@@ -175,14 +158,13 @@ bool copyDir(wstring from, wstring to, bool isDir)
 			bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
 			if (dir) {
 				CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
-				copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), dir);
+				copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str());
 			}
 			else {
 				CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true);
 			}
 		} while (FindNextFileW(handle, &data) != NULL);
 		FindClose(handle);
-	}
 }
 
 void setLastErrorFilename(wstring name)
