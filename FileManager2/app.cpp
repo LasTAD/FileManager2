@@ -47,6 +47,7 @@ void Console::updatePages()
 // пашет, если уже гарантируется, что доступ к дирке есть
 void Console::updateFiles()
 {
+	showStateString(L"Parsing dir...");
 	if (path.size() != 0) {
 		vector<PWIN32_FIND_DATAW> findFiles;
 		getFiles(getPath(), findFiles);
@@ -61,7 +62,9 @@ void Console::updateFiles()
 			dd->cFileName[2] = 0;
 			files.push_back(dd);
 		}
+		int counter_d = 0;
 		for (auto f : findFiles) {
+			showStateString(L"Parsing dir " + to_wstring(counter_d) + L'/' + to_wstring(findFiles.size()));
 			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				auto ce = countFiles(getPath() + f->cFileName + L"\\");
 				if (ce.all != -1) {
@@ -71,6 +74,7 @@ void Console::updateFiles()
 				}
 			}
 			files.push_back(f);
+			++counter_d;
 		}
 	}
 	else {
@@ -93,6 +97,7 @@ void Console::updateFiles()
 		}
 	}
 	pos = 0;
+	hideStateString();
 	updatePages();
 }
 

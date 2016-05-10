@@ -949,6 +949,7 @@ void startEditor(HANDLE hout, wstring path) {
 				}
 			}
 			else if (b == 77) {
+JUMP:
 				if (mode == 0) {
 					if (!(globalpos == sizeSum - 1 && cursor == 1)) {
 						cursor = (cursor + 1) % 2;
@@ -1011,36 +1012,44 @@ void startEditor(HANDLE hout, wstring path) {
 			if (mode == 0) {
 				if (b >= '0' && b <= '9') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b - '0');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b - '0');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b - '0';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b - '0';
 					}
 					force = true;
+					// прыг на следующий символ
+					goto JUMP;
 				}
 				else if (b >= 'A' &&  b <= 'F') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'A');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b + 10 - 'A');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'A';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'A';
 					}
 					force = true;
+					// прыг на следующий символ
+					goto JUMP;
 				}
 				else if (b >= 'a' &&  b <= 'f') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'a');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b + 10 - 'a');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'a';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'a';
 					}
 					force = true;
+					// прыг на следующий символ
+					goto JUMP;
 				}
 			}
 			else {
 				if (b >= 32 && b <= 126) {
-					buffer[globalpos] = b;
+					buffer[globalpos % (29 * 16)] = b;
 					force = true;
+					// прыг на следующий символ
+					goto JUMP;
 				}
 			}
 #pragma endregion Логика смены символа
