@@ -56,7 +56,7 @@ void Console::updateFiles()
 		files.clear();
 		if (path.size() > 0) { // если мы листуем не диски, то назад вернуться можно
 			PWIN32_FIND_DATAW dd = new WIN32_FIND_DATAW;
-			dd->dwReserved1 = 1;
+			dd->dwReserved1 = 0;
 			dd->cFileName[0] = L'.';
 			dd->cFileName[1] = L'.';
 			dd->cFileName[2] = 0;
@@ -329,12 +329,12 @@ void Console::work()
 		}
 		// вход в папку
 		else if (b == 13) {
-			if (files[pos]->dwReserved1 == 1) {
+			if (files[pos]->dwReserved1 == 0) {
 				path.pop_back();
 				updateFiles();
 				drawFiles();
 			}
-			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != 2) {
+			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != 2 && files[pos]->dwReserved1 != 1) {
 				startEditor(hout, getPath() + files[pos]->cFileName);
 				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}

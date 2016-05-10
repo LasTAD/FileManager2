@@ -693,7 +693,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 		}
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
-		if (files[f]->dwReserved1 != 1 && files[f]->dwReserved1 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		if (files[f]->dwReserved1 != 0 && files[f]->dwReserved1 != 1 && files[f]->dwReserved1 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			uint64 size = ((files[f]->nFileSizeHigh * (0xFFFFFFFFULL + 1ULL)) + files[f]->nFileSizeLow);
 			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
