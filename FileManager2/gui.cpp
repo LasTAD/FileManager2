@@ -40,22 +40,23 @@ wstring intToHexString(___int i, int length = 0) {
 // функция для преобразования шестнадцатеричного в число
 // проверена
 uint64 stringToInt(wstring s) {
+	if (s.length() == 0) return 0;
 	uint64 n = 0;
-	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
+	if (s[0] == L'0' && (s[1] == L'x' || s[1] == L'X')) { // hex
 		s = s.substr(2);
 		// count
 		uint64 m = 1;
-		for (size_t i = s.length() - 1; i > -1; --i) {
-			if (s[i] >= '0' && s[i] <= '9') {
-				n += (s[i] - '0') * m;
+		for (size_t i = s.length() - 1; i != 0xFFFFFFFFFFFFFFFF; --i) {
+			if (s[i] >= L'0' && s[i] <= L'9') {
+				n += (s[i] - L'0') * m;
 				m *= 16;
 			}
-			else if (s[i] >= 'a' && s[i] <= 'f') {
-				n += (s[i] - 'a' + 10) * m;
+			else if (s[i] >= L'a' && s[i] <= L'f') {
+				n += (s[i] - L'a' + 10) * m;
 				m *= 16;
 			}
-			else if (s[i] >= 'A' && s[i] <= 'F') {
-				n += (s[i] - 'A' + 10) * m;
+			else if (s[i] >= L'A' && s[i] <= L'F') {
+				n += (s[i] - L'A' + 10) * m;
 				m *= 16;
 			}
 			else {
@@ -66,9 +67,9 @@ uint64 stringToInt(wstring s) {
 	else { // dec
 		// count
 		uint64 m = 1;
-		for (size_t i = s.length() - 1; i > -1; --i) {
-			if (s[i] >= '0' && s[i] <= '9') {
-				n += (s[i] - '0') * m;
+		for (size_t i = s.length() - 1; i != 0xFFFFFFFFFFFFFFFF; --i) {
+			if (s[i] >= L'0' && s[i] <= L'9') {
+				n += (s[i] - L'0') * m;
 				m *= 10;
 			}
 			else {
@@ -693,7 +694,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
 		if (files[f]->dwReserved0 != 1 && files[f]->dwReserved0 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-			uint64 size = (((uint64)(files[f]->nFileSizeHigh) * ((uint64)MAXDWORD + 1U)) + files[f]->nFileSizeLow);
+			uint64 size = ((files[f]->nFileSizeHigh * (0xFFFFFFFFULL + 1ULL)) + files[f]->nFileSizeLow);
 			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -821,8 +822,8 @@ void startEditor(HANDLE hout, wstring path) {
 	// чтение размера, все отлично
 	DWORD sizeHigh_tpl;
 	DWORD size = GetFileSize(f, &sizeHigh_tpl);
-	unsigned __int64 sizeHigh = sizeHigh_tpl;
-	unsigned __int64 sizeSum = (sizeHigh * (0xFFFFFFFFu + 1)) + size, sizeCounter = sizeSum;
+	uint64 sizeHigh = sizeHigh_tpl;
+	uint64 sizeSum = (sizeHigh * (0xFFFFFFFFULL + 1ULL)) + size, sizeCounter = sizeSum;
 	// ---------------------------
 
 	// выделение памяти, все супер
