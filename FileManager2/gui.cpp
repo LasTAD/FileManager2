@@ -4,7 +4,7 @@
 #include <exception>
 #include <sstream>
 
-wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIR";
+wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIRECTORY";
 
 // функция для подсчета необходимого количества строк в окне
 // проверена, оптимизирована
@@ -699,7 +699,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 		}
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			if (files[f]->dwReserved1 == 1) {
-				wstringstream wss; wss << files[f]->nFileSizeLow << L" files, " << files[f]->nFileSizeHigh << L" dirs";
+				wstringstream wss; wss << files[f]->nFileSizeLow << L" files, " << files[f]->nFileSizeHigh << L" folders";
 				drawText(sizes, i * 20, 20, wss.str());
 			}
 			else {
