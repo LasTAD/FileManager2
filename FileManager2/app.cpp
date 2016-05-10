@@ -4,10 +4,11 @@
 #include <sstream>
 
 // Функция проверки имени файла/директории на правильность
+// todo проверка директории
 bool validateFilename(wstring str) {
-	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&str.find(L'\\') == wstring::npos &&
-		str.find(L':') == wstring::npos &&str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
-		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos &&str.find(L'/') == wstring::npos) return true;
+	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&/*str.find(L'\\') == wstring::npos &&*/
+		/*str.find(L':') == wstring::npos &&*/str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
+		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos/* &&str.find(L'/') == wstring::npos*/) return true;
 	return false;
 }
 
