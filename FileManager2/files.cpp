@@ -1,6 +1,6 @@
 #include "files.h"
 #include "gui.h"
-
+#include <string>
 
 static DWORD globalErrorCode = 0;
 static wstring globalErrorFilename = L"";
@@ -24,6 +24,7 @@ bool getFiles(wstring path, vector<PWIN32_FIND_DATAW> &files)
 			continue;
 		}
 		// -----------------------
+		data->dwReserved1 = MAXDWORD;
 		files.push_back(data);
 		data = new WIN32_FIND_DATAW; // выделим память для данных
 	} while (FindNextFileW(handle, data));

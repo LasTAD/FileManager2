@@ -56,7 +56,7 @@ void Console::updateFiles()
 		files.clear();
 		if (path.size() > 0) { // если мы листуем не диски, то назад вернуться можно
 			PWIN32_FIND_DATAW dd = new WIN32_FIND_DATAW;
-			dd->dwReserved0 = 1;
+			dd->dwReserved1 = 1;
 			dd->cFileName[0] = L'.';
 			dd->cFileName[1] = L'.';
 			dd->cFileName[2] = 0;
@@ -90,9 +90,10 @@ void Console::updateFiles()
 		files.clear();
 		for (DWORD i = 0; i < count; i += 4) {
 			PWIN32_FIND_DATAW d = new WIN32_FIND_DATAW;
-			d->dwReserved0 = 2;
+			d->dwReserved1 = 2;
 			d->cFileName[0] = drives[i];
 			d->cFileName[1] = 0;
+			d->dwFileAttributes = 0;
 			files.push_back(d);
 		}
 	}
@@ -222,7 +223,7 @@ void Console::work()
 				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\nMcDonalds\nлучше\nне\nобедать", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
-				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
@@ -277,7 +278,7 @@ void Console::work()
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
@@ -328,12 +329,12 @@ void Console::work()
 		}
 		// вход в папку
 		else if (b == 13) {
-			if (files[pos]->dwReserved0 == 1) {
+			if (files[pos]->dwReserved1 == 1) {
 				path.pop_back();
 				updateFiles();
 				drawFiles();
 			}
-			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved0 != 2) {
+			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != 2) {
 				startEditor(hout, getPath() + files[pos]->cFileName);
 				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}

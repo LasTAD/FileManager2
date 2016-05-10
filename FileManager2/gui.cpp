@@ -693,7 +693,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 		}
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
-		if (files[f]->dwReserved0 != 1 && files[f]->dwReserved0 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		if (files[f]->dwReserved1 != 1 && files[f]->dwReserved1 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			uint64 size = ((files[f]->nFileSizeHigh * (0xFFFFFFFFULL + 1ULL)) + files[f]->nFileSizeLow);
 			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
@@ -710,8 +710,8 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 			drawText(sizes, i * 20, 20, L"");
 		}
 		wstring type = L"File";
-		if (files[f]->dwReserved0 == 1) type = L"";
-		if (files[f]->dwReserved0 == 2) type = L"Drive";
+		if (files[f]->dwReserved1 == 1) type = L"";
+		if (files[f]->dwReserved1 == 2) type = L"Drive";
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = L"Directory";
 		drawText(types, i * 20, 20, type);
 	}
@@ -809,8 +809,26 @@ void drawEditorSelect(CHAR_INFO* buf, int posx, int posy, int oldpage, int oldpo
 }
 
 void startEditor(HANDLE hout, wstring path) {
+	// показатель чтения
+	bool readOnly = false;
+	bool wasReadonly = false;
+	// -----------------
 	showStateString(L"Opening file...");
-	HANDLE f = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	// установка атрибута чтения в отключенный
+	DWORD attr = GetFileAttributesW(path.c_str());
+	if (attr & FILE_READ_ONLY) {
+		attr &= ~FILE_READ_ONLY;
+		if (SetFileAttributesW(path.c_str(), attr)) {
+			wasReadonly = true;
+		}
+		else {
+			readOnly = true;
+		}
+	}
+	// ---------------------------------------
+	DWORD desiredAccess = GENERIC_READ;
+	if (!readOnly) desiredAccess |= GENERIC_WRITE;
+	HANDLE f = CreateFileW(path.c_str(), desiredAccess, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (f == INVALID_HANDLE_VALUE) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при открытии файла");
@@ -829,10 +847,15 @@ void startEditor(HANDLE hout, wstring path) {
 	// выделение памяти, все супер
 	showStateString(L"Allocating memory...");
 	unsigned char *buffer = (unsigned char*) malloc(29 * 16);
-	if (!buffer) {
+	if (!buffer) { // эта ошибка никогда возможно не произойдет
 		showDialogWindowErrorOk(hout, L"Недостаточно памяти для открытия файла", L"Ошибка при открытии файла");
 		CloseHandle(f);
 		hideStateString();
+		if (wasReadonly) {
+			DWORD attr = GetFileAttributesW(path.c_str());
+			attr |= FILE_READ_ONLY;
+			SetFileAttributesW(path.c_str(), attr);
+		}
 		return;
 	}
 	// ---------------------------
@@ -840,19 +863,6 @@ void startEditor(HANDLE hout, wstring path) {
 	// чтение файла
 	showStateString(L"Reading file");
 	DWORD readed;
-	/*unsigned char *bufferPointer = buffer;
-	while (sizeCounter != 0) {
-		if (!ReadFile(f, bufferPointer, min(1024 * 1024, sizeCounter), &readed, NULL)) {
-			DWORD e = GetLastError();
-			showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
-			CloseHandle(f);
-			free(buffer);
-			hideStateString();
-			return;
-		}
-		sizeCounter -= readed;
-		bufferPointer += readed;
-	}*/
 	if (!ReadFile(f, buffer, min (29 * 16, sizeSum), &readed, NULL)) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
@@ -866,7 +876,7 @@ void startEditor(HANDLE hout, wstring path) {
 
 	// показатели изменений
 	bool saveChanges = false;
-	bool hasChanges = true; // TODO false after debug
+	bool hasChanges = false;
 	// --------------------
 
 	// отрисовка окна
@@ -1018,6 +1028,7 @@ JUMP:
 						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b - '0';
 					}
 					force = true;
+					hasChanges = true;
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1029,6 +1040,7 @@ JUMP:
 						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'A';
 					}
 					force = true;
+					hasChanges = true;
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1048,6 +1060,7 @@ JUMP:
 				if (b >= 32 && b <= 126) {
 					buffer[globalpos % (29 * 16)] = b;
 					force = true;
+					hasChanges = true;
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1065,10 +1078,7 @@ JUMP:
 			if (!ReadFile(f, buffer, min(29 * 16, sizeSum - 1), &readed, NULL)) {
 				DWORD e = GetLastError();
 				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
-				CloseHandle(f);
-				free(buffer);
-				hideStateString();
-				return;
+				goto EXIT;
 			}
 		}
 
@@ -1138,9 +1148,15 @@ JUMP:
 	}
 	showStateString(L"Deallocating memory...");
 	// очистка
+EXIT:
 	CloseHandle(f);
 	free(buffer);
 	hideStateString();
+	if (wasReadonly) {
+		DWORD attr = GetFileAttributesW(path.c_str());
+		attr |= FILE_READ_ONLY;
+		SetFileAttributesW(path.c_str(), attr);
+	}
 	// -------
 	WriteConsoleOutputW(hout, old, { 82, 36 }, { 0,0 }, &brdr);
 	delete old;
