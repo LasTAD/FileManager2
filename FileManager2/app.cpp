@@ -1,5 +1,6 @@
 #include "app.h"
 #include "gui.h"
+#include "files.h"
 #include <sstream>
 
 // Функция проверки имени файла/директории на правильность
@@ -245,9 +246,30 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
-				//copyFile(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", true);
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Над функцией копирования ведется работа", L"Сообщение от разработчиков");
+				/*auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии файла:", L"Копирование", validateFilename);
+				if (!input.canceled) {
+					showStateString(L"Copying...");
+					BOOL r = CreateDirectoryW(wstring(getPath() + input.data).c_str(), NULL);
+					hideStateString();
+					if (!r) {
+						DWORD val = GetLastError();
+						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+					}
+					else {
+						updateFiles();
+						for (int i = 0; i < (int)files.size(); ++i) {
+							if (wstring(files[i]->cFileName) == input.data) {
+								pos = i;
+								updatePages();
+								break;
+							}
+						}
+						drawFiles(true);
+					}
+				}*/
+				_copy(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 			}
+
 			else if (b == 62) { // f4 delete
 				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");

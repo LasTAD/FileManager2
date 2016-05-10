@@ -1,6 +1,10 @@
 #include "files.h"
 #include "gui.h"
 
+
+static DWORD globalErrorCode = 0;
+static wstring globalErrorFilename = L"";
+
 bool getFiles(wstring path, vector<PWIN32_FIND_DATAW> &files)
 {
 	PWIN32_FIND_DATAW data = new WIN32_FIND_DATAW; // выделим память для данных
@@ -130,75 +134,56 @@ bool copyDir(wstring src, wstring res)
 }
 */
 
-bool copyFile(wstring from, wstring to, bool isDir)
-{
-	// TEST
-	HANDLE f1 = CreateFileW(from.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f1 == INVALID_HANDLE_VALUE) {
-		CloseHandle(f1);
-		return false;
+bool _copy(wstring from, wstring to, bool isDir) {
+	if (isDir) {
+		CreateDirectoryW(to.c_str(), NULL);
+		copyDir(from, to,isDir);
 	}
-	/*
-	HANDLE f2 = CreateFileW(to.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f2 == INVALID_HANDLE_VALUE) {
-		DWORD v = GetLastError();
-		CloseHandle(f1);
-		CloseHandle(f2);
-		return false;
-	}*/
-
-	DWORD v = GetLastError();
-	char buf[4096];
-	unsigned long long read = 0;
-	DWORD length = 0;
-	do {
-		ReadFile(f1, buf, 4096, &length, NULL);
-		read += length;
-	} while (length != 0);
-	v = GetLastError();
-	int t = 0;
-	// =====
-	/*
-	errno_t err;
-	FILE *fileSrc, *fileRes;
-	err = _wfopen_s(&fileSrc, from.c_str(), L"rb");
-	if (err) {
-		// TODO
-		//ErrorMessage(L"Unable to open requested file!");
-		return;
+	else {
+		DWORD at = GetFileAttributesW(from.c_str());
+		if (at & FILE_ATTRIBUTE_READONLY) {
+			at &= ~FILE_ATTRIBUTE_READONLY;
+			if (!SetFileAttributesW(from.c_str(), at)) {
+				setLastErrorCode(GetLastError());
+				setLastErrorFilename(from);
+				return false;
+			}
+		}
+		bool k = CopyFileW(from.c_str(), to.c_str(), true);
+		if (!k) {
+			setLastErrorCode(GetLastError());
+			setLastErrorFilename(to);
+		}
+		return k;
 	}
-	err = _wfopen_s(&fileRes, to.c_str(), L"wb");
-	if (err) {
-		// TODO
-		// ErrorMessage(L"Unable to create new file!");
-		return;
-	}
-	unsigned int fsize, n;
-	fseek(fileSrc, 0, SEEK_END);
-	fsize = ftell(fileSrc);
-	rewind(fileSrc);
-	char *buffer;
-	n = fsize / 65536;
-	for (int i = 0; i < n; ++i)
-	{
-		buffer = new char[65536];
-		fread(buffer, 65536, sizeof(char), fileSrc);
-		fwrite(buffer, 65536, sizeof(char), fileRes);
-		delete[] buffer;
-	}
-	int rem = fsize - n * 65536;
-	buffer = new char[rem];
-	fread(buffer, rem, sizeof(char), fileSrc);
-	fwrite(buffer, rem, sizeof(char), fileRes);
-	delete[] buffer;
-	_fcloseall();
-	return false;
-	*/
-	return false;
 }
 
-static wstring globalErrorFilename = L"";
-static DWORD globalErrorCode = 0;
+bool copyDir(wstring from, wstring to, bool isDir)
+{
+	if (isDir) {
+		WIN32_FIND_DATAW data;
+		HANDLE handle = FindFirstFileW(wstring(from + L"\\*.*").c_str(), &data);
+		if (handle == INVALID_HANDLE_VALUE) {
+			return false;
+		}
+		do {
+			// отсечение модификаторов
+			if (lstrcmpW(data.cFileName, L"..") == 0 || lstrcmpW(data.cFileName, L".") == 0) {
+				continue;
+			}
+			// -----------------------
+			bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
+			if (dir) {
+				CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
+				copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), dir);
+			}
+			else {
+				CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true);
+			}
+		} while (FindNextFileW(handle, &data) != NULL);
+		FindClose(handle);
+	}
+}
 
 void setLastErrorFilename(wstring name)
 {
