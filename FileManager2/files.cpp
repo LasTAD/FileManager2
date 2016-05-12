@@ -144,27 +144,27 @@ bool _copy(wstring from, wstring to, bool isDir) {
 
 bool copyDir(wstring from, wstring to)
 {
-		WIN32_FIND_DATAW data;
-		HANDLE handle = FindFirstFileW(wstring(from + L"\\*.*").c_str(), &data);
-		if (handle == INVALID_HANDLE_VALUE) {
-			return false;
+	WIN32_FIND_DATAW data;
+	HANDLE handle = FindFirstFileW(wstring(from + L"\\*.*").c_str(), &data);
+	if (handle == INVALID_HANDLE_VALUE) {
+		return false;
+	}
+	do {
+		// отсечение модификаторов
+		if (lstrcmpW(data.cFileName, L"..") == 0 || lstrcmpW(data.cFileName, L".") == 0) {
+			continue;
 		}
-		do {
-			// отсечение модификаторов
-			if (lstrcmpW(data.cFileName, L"..") == 0 || lstrcmpW(data.cFileName, L".") == 0) {
-				continue;
-			}
-			// -----------------------
-			bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
-			if (dir) {
-				CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
-				copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str());
-			}
-			else {
-				CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true);
-			}
-		} while (FindNextFileW(handle, &data) != NULL);
-		FindClose(handle);
+		// -----------------------
+		bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
+		if (dir) {
+			CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
+			copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str());
+		}
+		else {
+			CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true);
+		}
+	} while (FindNextFileW(handle, &data) != NULL);
+	FindClose(handle);
 }
 
 void setLastErrorFilename(wstring name)
