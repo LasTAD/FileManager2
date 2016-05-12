@@ -339,7 +339,7 @@ int showDialogWindowYNC(HANDLE hout, wstring text, wstring caption, int def)
 			}
 			if (b == 13) break;
 			if (b == 27) {
-				key = false;
+				key = 2;
 				break;
 			}
 		}
@@ -816,8 +816,8 @@ void startEditor(HANDLE hout, wstring path) {
 	showStateString(L"Opening file...");
 	// óñòàíîâêà àòğèáóòà ÷òåíèÿ â îòêëş÷åííûé
 	DWORD attr = GetFileAttributesW(path.c_str());
-	if (attr & FILE_READ_ONLY) {
-		attr &= ~FILE_READ_ONLY;
+	if ((attr & FILE_ATTRIBUTE_READONLY) != 0) {
+		attr &= ~FILE_ATTRIBUTE_READONLY;
 		if (SetFileAttributesW(path.c_str(), attr)) {
 			wasReadonly = true;
 		}
@@ -832,6 +832,15 @@ void startEditor(HANDLE hout, wstring path) {
 	if (f == INVALID_HANDLE_VALUE) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Îøèáêà ïğè îòêğûòèè ôàéëà");
+		CloseHandle(f);
+		hideStateString();
+		return;
+	}
+
+	TempFile tempFile;
+	if (!tempFile.isOpen()) {
+		DWORD e = GetLastError();
+		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Îøèáêà ïğè ñîçäàíèè âğåìåííîãî ôàéëà");
 		CloseHandle(f);
 		hideStateString();
 		return;
@@ -853,7 +862,7 @@ void startEditor(HANDLE hout, wstring path) {
 		hideStateString();
 		if (wasReadonly) {
 			DWORD attr = GetFileAttributesW(path.c_str());
-			attr |= FILE_READ_ONLY;
+			attr |= FILE_ATTRIBUTE_READONLY;
 			SetFileAttributesW(path.c_str(), attr);
 		}
 		return;
@@ -898,7 +907,7 @@ void startEditor(HANDLE hout, wstring path) {
 	else {
 		filename = path;
 	}
-	drawWindow(brd, 82, 36, TextWhite | BgGreen, L"HEX Editor - [" + filename + L"]");
+	drawWindow(brd, 82, 36, TextWhite | BgGreen, (readOnly ? L"HEX Editor [Read only] - [" : L"HEX Editor - [") + filename + L"]");
 	drawText(brd, 82 * 33 + 2, 78, L"\u25cf HOME to first pos \u25cf END to last pos");
 	drawText(brd, 82 * 34 + 2, 78, L"\u25cf ESC exit \u25cf ARROWS change position \u25cf TAB edit mode \u25cf ENTER goto address");
 	drawEditorTable(brd);
@@ -1002,6 +1011,9 @@ JUMP:
 					break;
 				}
 			}
+			else {
+				break;
+			}
 		}
 		else if (b == 13) {
 			auto input = showDialogWindowInputOkCancel(hout, L"Êîä àäğåñà ñèìâîëà:", L"Ââîä", validateInputAddress);
@@ -1019,6 +1031,7 @@ JUMP:
 		}
 		else {
 #pragma region
+			if (!readOnly)
 			if (mode == 0) {
 				if (b >= '0' && b <= '9') {
 					if (cursor == 0) {
@@ -1029,6 +1042,7 @@ JUMP:
 					}
 					force = true;
 					hasChanges = true;
+					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
 					// ïğûã íà ñëåäóşùèé ñèìâîë
 					goto JUMP;
 				}
@@ -1041,6 +1055,7 @@ JUMP:
 					}
 					force = true;
 					hasChanges = true;
+					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
 					// ïğûã íà ñëåäóşùèé ñèìâîë
 					goto JUMP;
 				}
@@ -1061,6 +1076,7 @@ JUMP:
 					buffer[globalpos % (29 * 16)] = b;
 					force = true;
 					hasChanges = true;
+					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
 					// ïğûã íà ñëåäóşùèé ñèìâîë
 					goto JUMP;
 				}
@@ -1079,6 +1095,15 @@ JUMP:
 				DWORD e = GetLastError();
 				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Îøèáêà ïğè ÷òåíèè ôàéëà");
 				goto EXIT;
+			}
+			for (uint64 i = 0; i < tempFile.count(); ++i) {
+				uint64 bp;
+				byte val;
+				if (tempFile.getNotDelete(val, bp, i)) {
+					if (bp >= page * 29 * 16 && bp < (page + 1) * 29 * 16) {
+						buffer[bp % (29 * 16)] = val;
+					}
+				}
 			}
 		}
 
@@ -1132,8 +1157,8 @@ JUMP:
 	delete brd;
 	hideCursor(hout);
 	// ñîõğàíåíèå
-	showStateString(L"Saving changes...");
-	if (saveChanges) {
+	/*if (saveChanges) {
+		showStateString(L"Saving changes...");
 		SetFilePointer(f, 0, 0, FILE_BEGIN);
 		DWORD written;
 		sizeCounter = sizeSum;
@@ -1145,8 +1170,8 @@ JUMP:
 			}
 			sizeCounter -= written;
 		}
-	}
-	showStateString(L"Deallocating memory...");
+		showStateString(L"Deallocating memory...");
+	}*/
 	// î÷èñòêà
 EXIT:
 	CloseHandle(f);
@@ -1154,7 +1179,7 @@ EXIT:
 	hideStateString();
 	if (wasReadonly) {
 		DWORD attr = GetFileAttributesW(path.c_str());
-		attr |= FILE_READ_ONLY;
+		attr |= FILE_ATTRIBUTE_READONLY;
 		SetFileAttributesW(path.c_str(), attr);
 	}
 	// -------

@@ -223,7 +223,7 @@ void Console::work()
 				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\nMcDonalds\nлучше\nне\nобедать", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
-				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
@@ -253,6 +253,10 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию копирования", L"Ошибка");
+					continue;
+				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии:", L"Копирование", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Copying...");
@@ -274,11 +278,10 @@ void Console::work()
 						drawFiles(true);
 					}
 				}
-				//_copy(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
