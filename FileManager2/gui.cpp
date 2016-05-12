@@ -216,24 +216,58 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 	// значение выбранной кнопочки
 	bool key = false;
 
-	CHAR_INFO old[64 * 7];
+	short strcount = estimateString(text, 60, 32);
+	CHAR_INFO *old = new CHAR_INFO[64 * (6 + strcount)];
 	SMALL_RECT sr;
-	sr.Top = 16;
+	sr.Top = 16 - strcount / 2;
 	sr.Left = 32;
 	sr.Right = 95;
-	sr.Bottom = 23;
-	ReadConsoleOutputW(hout, old, { 64, 7 }, { 0, 0 }, &sr);
+	sr.Bottom = 23 + strcount / 2;
+	ReadConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0, 0 }, &sr);
 
-	CHAR_INFO wnd[64 * 7];
-	drawWindow(wnd, 64, 7, TextWhite | BgBlue, caption);
-	drawText(wnd, 64 * 2 + 2, 60, text + L" [д/н]");
+	CHAR_INFO *wnd = new CHAR_INFO[64 * (6 + strcount)];
+
+	// рамка окна
+	drawWindow(wnd, 64, 6 + strcount, TextWhite | BgBlue, caption);
+	// ----------
+
+	// отрисовка многострочного текста
+	int sc = 1;
+	wstring tail = text;
+	while (tail.length() != 0) {
+		size_t p = tail.find(L'\n');
+		if (p != wstring::npos) {
+			if (p < 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, p));
+				tail = tail.substr(p + 1);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+		}
+		else {
+			if (tail.length() > 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail);
+				tail = L"";
+			}
+		}
+		++sc;
+	}
+	// -------------------------------
+	
+	
 	// кнопки
-	drawText(wnd, 64 * 4 + 3, 2, L"Да");
-	fillColor(wnd, 64 * 4 + 2, 4, TextWhite | BgBlue);
-	drawText(wnd, 64 * 4 + 8, 3, L"Нет");
-	fillColor(wnd, 64 * 4 + 7, 5, TextWhite | BgCyan);
+	drawText(wnd, 64 * (3+strcount) + 3, 2, L"Да");
+	fillColor(wnd, 64 * (3+strcount) + 2, 4, TextWhite | BgBlue);
+	drawText(wnd, 64 * (3+strcount) + 8, 3, L"Нет");
+	fillColor(wnd, 64 * (3+strcount) + 7, 5, TextWhite | BgCyan);
 	// ------
-	WriteConsoleOutputW(hout, wnd, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 0,0 }, &sr);
 	while (true) {
 		int b = _getch();
 		if (b == 0) {
@@ -245,15 +279,15 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 			if (b == 77 || b == 75) {
 				key = !key;
 				SMALL_RECT bt;
-				bt.Top = 20;
+				bt.Top = 20 + strcount / 2;
 				bt.Left = 34;
 				bt.Right = 44;
-				bt.Bottom = 21;
-				drawText(wnd, 64 * 4 + 3, 2, L"Да");
-				fillColor(wnd, 64 * 4 + 2, 4, key ? TextWhite | BgCyan : TextWhite | BgBlue);
-				drawText(wnd, 64 * 4 + 8, 3, L"Нет");
-				fillColor(wnd, 64 * 4 + 7, 5, key ? TextWhite | BgBlue : TextWhite | BgCyan);
-				WriteConsoleOutputW(hout, wnd, { 64, 7 }, { 2, 4 }, &bt);
+				bt.Bottom = 21 + strcount / 2;
+				drawText(wnd, 64 * (3 + strcount) + 3, 2, L"Да");
+				fillColor(wnd, 64 * (3 + strcount) + 2, 4, key ? TextWhite | BgCyan : TextWhite | BgBlue);
+				drawText(wnd, 64 * (3 + strcount) + 8, 3, L"Нет");
+				fillColor(wnd, 64 * (3 + strcount) + 7, 5, key ? TextWhite | BgBlue : TextWhite | BgCyan);
+				WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 2, 3 + strcount }, &bt);
 			}
 		}
 		else {
@@ -272,7 +306,9 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 			}
 		}
 	}
-	WriteConsoleOutputW(hout, old, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0,0 }, &sr);
+	delete old;
+	delete wnd;
 	return key;
 }
 
@@ -809,10 +845,22 @@ void drawEditorSelect(CHAR_INFO* buf, int posx, int posy, int oldpage, int oldpo
 }
 
 void startEditor(HANDLE hout, wstring path) {
+	// предупреждение
+	static bool warn = false;
+	if (!warn) {
+		if (!showDialogWindowYN(hout, L"В процессе работы HEX-редактор сразу записывает изменения в файл,"
+			L"поэтому рекомендуем сделать копию файла. Вы согласны продолжить работу?", L"Предупреждение")) {
+			return;
+		}
+		warn = true;
+	}
+	// --------------
+
 	// показатель чтения
 	bool readOnly = false;
 	bool wasReadonly = false;
 	// -----------------
+
 	showStateString(L"Opening file...");
 	// установка атрибута чтения в отключенный
 	DWORD attr = GetFileAttributesW(path.c_str());
@@ -837,20 +885,18 @@ void startEditor(HANDLE hout, wstring path) {
 		return;
 	}
 
-	TempFile tempFile;
-	if (!tempFile.isOpen()) {
-		DWORD e = GetLastError();
-		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при создании временного файла");
-		CloseHandle(f);
-		hideStateString();
-		return;
-	}
-
 	// чтение размера, все отлично
 	DWORD sizeHigh_tpl;
 	DWORD size = GetFileSize(f, &sizeHigh_tpl);
 	uint64 sizeHigh = sizeHigh_tpl;
 	uint64 sizeSum = (sizeHigh * (0xFFFFFFFFULL + 1ULL)) + size, sizeCounter = sizeSum;
+
+	if (sizeSum == 0) {
+		showDialogWindowErrorOk(hout, L"Размер файла равен нулю, HEX-редактор не предназначен для добавления байтов", L"Предупреждение");
+		CloseHandle(f);
+		hideStateString();
+		return;
+	}
 	// ---------------------------
 
 	// выделение памяти, все супер
@@ -882,11 +928,6 @@ void startEditor(HANDLE hout, wstring path) {
 	}
 	hideStateString();
 	// ------------
-
-	// показатели изменений
-	bool saveChanges = false;
-	bool hasChanges = false;
-	// --------------------
 
 	// отрисовка окна
 	SMALL_RECT brdr;
@@ -1000,20 +1041,7 @@ JUMP:
 			}
 		}
 		else if (b == 27) {
-			if (hasChanges) {
-				int k = showDialogWindowYNC(hout, L"Сохранить изменения в файле " + filename + L"?", L"Вопрос");
-				if (k == 0) {
-					saveChanges = true;
-					break;
-				}
-				else if (k == 1) {
-					saveChanges = false;
-					break;
-				}
-			}
-			else {
-				break;
-			}
+			break;
 		}
 		else if (b == 13) {
 			auto input = showDialogWindowInputOkCancel(hout, L"Код адреса символа:", L"Ввод", validateInputAddress);
@@ -1041,8 +1069,7 @@ JUMP:
 						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b - '0';
 					}
 					force = true;
-					hasChanges = true;
-					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1054,8 +1081,7 @@ JUMP:
 						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'A';
 					}
 					force = true;
-					hasChanges = true;
-					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1067,6 +1093,7 @@ JUMP:
 						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'a';
 					}
 					force = true;
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1075,8 +1102,7 @@ JUMP:
 				if (b >= 32 && b <= 126) {
 					buffer[globalpos % (29 * 16)] = b;
 					force = true;
-					hasChanges = true;
-					tempFile.put(buffer[globalpos % (29 * 16)], globalpos);
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
 					// прыг на следующий символ
 					goto JUMP;
 				}
@@ -1095,15 +1121,6 @@ JUMP:
 				DWORD e = GetLastError();
 				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
 				goto EXIT;
-			}
-			for (uint64 i = 0; i < tempFile.count(); ++i) {
-				uint64 bp;
-				byte val;
-				if (tempFile.getNotDelete(val, bp, i)) {
-					if (bp >= page * 29 * 16 && bp < (page + 1) * 29 * 16) {
-						buffer[bp % (29 * 16)] = val;
-					}
-				}
 			}
 		}
 
@@ -1156,23 +1173,6 @@ JUMP:
 	}
 	delete brd;
 	hideCursor(hout);
-	// сохранение
-	/*if (saveChanges) {
-		showStateString(L"Saving changes...");
-		SetFilePointer(f, 0, 0, FILE_BEGIN);
-		DWORD written;
-		sizeCounter = sizeSum;
-		while (sizeCounter != 0) {
-			if (!WriteFile(f, buffer, sizeCounter, &written, NULL)) {
-				DWORD e = GetLastError();
-				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при записи файла");
-				break;
-			}
-			sizeCounter -= written;
-		}
-		showStateString(L"Deallocating memory...");
-	}*/
-	// очистка
 EXIT:
 	CloseHandle(f);
 	free(buffer);

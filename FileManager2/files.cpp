@@ -190,3 +190,12 @@ DWORD getLastErrorCode()
 	globalErrorCode = 0;
 	return n;
 }
+
+bool WriteByte(HANDLE f, uint64 pos, byte b)
+{
+	LARGE_INTEGER li;
+	li.QuadPart = pos;
+	SetFilePointer(f, li.LowPart, &li.HighPart, FILE_BEGIN);
+	DWORD written;
+	return WriteFile(f, &b, 1, &written, NULL) && written == 1;
+}

@@ -114,3 +114,5 @@ wstring getLastErrorFilename();
 void setLastErrorCode(DWORD code);
 
 DWORD getLastErrorCode();
+
+bool WriteByte(HANDLE f, uint64 pos, byte b);
