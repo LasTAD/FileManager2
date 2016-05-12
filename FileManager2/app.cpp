@@ -47,6 +47,7 @@ void Console::updatePages()
 // пашет, если уже гарантируется, что доступ к дирке есть
 void Console::updateFiles()
 {
+	showStateString(L"Parsing dir...");
 	if (path.size() != 0) {
 		vector<PWIN32_FIND_DATAW> findFiles;
 		getFiles(getPath(), findFiles);
@@ -55,13 +56,15 @@ void Console::updateFiles()
 		files.clear();
 		if (path.size() > 0) { // если мы листуем не диски, то назад вернуться можно
 			PWIN32_FIND_DATAW dd = new WIN32_FIND_DATAW;
-			dd->dwReserved0 = 1;
+			dd->dwReserved1 = 0;
 			dd->cFileName[0] = L'.';
 			dd->cFileName[1] = L'.';
 			dd->cFileName[2] = 0;
 			files.push_back(dd);
 		}
+		int counter_d = 0;
 		for (auto f : findFiles) {
+			showStateString(L"Parsing dir " + to_wstring(counter_d) + L'/' + to_wstring(findFiles.size()));
 			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				auto ce = countFiles(getPath() + f->cFileName + L"\\");
 				if (ce.all != -1) {
@@ -71,6 +74,7 @@ void Console::updateFiles()
 				}
 			}
 			files.push_back(f);
+			++counter_d;
 		}
 	}
 	else {
@@ -86,13 +90,15 @@ void Console::updateFiles()
 		files.clear();
 		for (DWORD i = 0; i < count; i += 4) {
 			PWIN32_FIND_DATAW d = new WIN32_FIND_DATAW;
-			d->dwReserved0 = 2;
+			d->dwReserved1 = 2;
 			d->cFileName[0] = drives[i];
 			d->cFileName[1] = 0;
+			d->dwFileAttributes = 0;
 			files.push_back(d);
 		}
 	}
 	pos = 0;
+	hideStateString();
 	updatePages();
 }
 
@@ -217,7 +223,7 @@ void Console::work()
 				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\nMcDonalds\nлучше\nне\nобедать", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
-				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
@@ -247,6 +253,10 @@ void Console::work()
 			}
 			else if (b == 61) { // f3 copy
 				// TODO
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию копирования", L"Ошибка");
+					continue;
+				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии:", L"Копирование", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Copying...");
@@ -268,11 +278,10 @@ void Console::work()
 						drawFiles(true);
 					}
 				}
-				//_copy(getPath() + files[pos]->cFileName, getPath() + files[pos]->cFileName + L"1", files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved0 == 1 || files[pos]->dwReserved0 == 2) {
+				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
@@ -323,12 +332,12 @@ void Console::work()
 		}
 		// вход в папку
 		else if (b == 13) {
-			if (files[pos]->dwReserved0 == 1) {
+			if (files[pos]->dwReserved1 == 0) {
 				path.pop_back();
 				updateFiles();
 				drawFiles();
 			}
-			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved0 != 2) {
+			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != 2 && files[pos]->dwReserved1 != 1) {
 				startEditor(hout, getPath() + files[pos]->cFileName);
 				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}

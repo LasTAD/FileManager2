@@ -216,24 +216,58 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 	// значение выбранной кнопочки
 	bool key = false;
 
-	CHAR_INFO old[64 * 7];
+	short strcount = estimateString(text, 60, 32);
+	CHAR_INFO *old = new CHAR_INFO[64 * (6 + strcount)];
 	SMALL_RECT sr;
-	sr.Top = 16;
+	sr.Top = 16 - strcount / 2;
 	sr.Left = 32;
 	sr.Right = 95;
-	sr.Bottom = 23;
-	ReadConsoleOutputW(hout, old, { 64, 7 }, { 0, 0 }, &sr);
+	sr.Bottom = 23 + strcount / 2;
+	ReadConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0, 0 }, &sr);
 
-	CHAR_INFO wnd[64 * 7];
-	drawWindow(wnd, 64, 7, TextWhite | BgBlue, caption);
-	drawText(wnd, 64 * 2 + 2, 60, text + L" [д/н]");
+	CHAR_INFO *wnd = new CHAR_INFO[64 * (6 + strcount)];
+
+	// рамка окна
+	drawWindow(wnd, 64, 6 + strcount, TextWhite | BgBlue, caption);
+	// ----------
+
+	// отрисовка многострочного текста
+	int sc = 1;
+	wstring tail = text;
+	while (tail.length() != 0) {
+		size_t p = tail.find(L'\n');
+		if (p != wstring::npos) {
+			if (p < 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, p));
+				tail = tail.substr(p + 1);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+		}
+		else {
+			if (tail.length() > 60) {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail.substr(0, 60));
+				tail = tail.substr(60);
+			}
+			else {
+				drawText(wnd, 64 * (1 + sc) + 2, 60, tail);
+				tail = L"";
+			}
+		}
+		++sc;
+	}
+	// -------------------------------
+	
+	
 	// кнопки
-	drawText(wnd, 64 * 4 + 3, 2, L"Да");
-	fillColor(wnd, 64 * 4 + 2, 4, TextWhite | BgBlue);
-	drawText(wnd, 64 * 4 + 8, 3, L"Нет");
-	fillColor(wnd, 64 * 4 + 7, 5, TextWhite | BgCyan);
+	drawText(wnd, 64 * (3+strcount) + 3, 2, L"Да");
+	fillColor(wnd, 64 * (3+strcount) + 2, 4, TextWhite | BgBlue);
+	drawText(wnd, 64 * (3+strcount) + 8, 3, L"Нет");
+	fillColor(wnd, 64 * (3+strcount) + 7, 5, TextWhite | BgCyan);
 	// ------
-	WriteConsoleOutputW(hout, wnd, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 0,0 }, &sr);
 	while (true) {
 		int b = _getch();
 		if (b == 0) {
@@ -245,15 +279,15 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 			if (b == 77 || b == 75) {
 				key = !key;
 				SMALL_RECT bt;
-				bt.Top = 20;
+				bt.Top = 20 + strcount / 2;
 				bt.Left = 34;
 				bt.Right = 44;
-				bt.Bottom = 21;
-				drawText(wnd, 64 * 4 + 3, 2, L"Да");
-				fillColor(wnd, 64 * 4 + 2, 4, key ? TextWhite | BgCyan : TextWhite | BgBlue);
-				drawText(wnd, 64 * 4 + 8, 3, L"Нет");
-				fillColor(wnd, 64 * 4 + 7, 5, key ? TextWhite | BgBlue : TextWhite | BgCyan);
-				WriteConsoleOutputW(hout, wnd, { 64, 7 }, { 2, 4 }, &bt);
+				bt.Bottom = 21 + strcount / 2;
+				drawText(wnd, 64 * (3 + strcount) + 3, 2, L"Да");
+				fillColor(wnd, 64 * (3 + strcount) + 2, 4, key ? TextWhite | BgCyan : TextWhite | BgBlue);
+				drawText(wnd, 64 * (3 + strcount) + 8, 3, L"Нет");
+				fillColor(wnd, 64 * (3 + strcount) + 7, 5, key ? TextWhite | BgBlue : TextWhite | BgCyan);
+				WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 2, 3 + strcount }, &bt);
 			}
 		}
 		else {
@@ -272,7 +306,9 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 			}
 		}
 	}
-	WriteConsoleOutputW(hout, old, { 64, 7 }, { 0,0 }, &sr);
+	WriteConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0,0 }, &sr);
+	delete old;
+	delete wnd;
 	return key;
 }
 
@@ -339,7 +375,7 @@ int showDialogWindowYNC(HANDLE hout, wstring text, wstring caption, int def)
 			}
 			if (b == 13) break;
 			if (b == 27) {
-				key = false;
+				key = 2;
 				break;
 			}
 		}
@@ -693,7 +729,7 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 		}
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
-		if (files[f]->dwReserved0 != 1 && files[f]->dwReserved0 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		if (files[f]->dwReserved1 != 0 && files[f]->dwReserved1 != 1 && files[f]->dwReserved1 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			uint64 size = ((files[f]->nFileSizeHigh * (0xFFFFFFFFULL + 1ULL)) + files[f]->nFileSizeLow);
 			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
@@ -710,8 +746,8 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 			drawText(sizes, i * 20, 20, L"");
 		}
 		wstring type = L"File";
-		if (files[f]->dwReserved0 == 1) type = L"";
-		if (files[f]->dwReserved0 == 2) type = L"Drive";
+		if (files[f]->dwReserved1 == 1) type = L"";
+		if (files[f]->dwReserved1 == 2) type = L"Drive";
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = L"Directory";
 		drawText(types, i * 20, 20, type);
 	}
@@ -809,8 +845,38 @@ void drawEditorSelect(CHAR_INFO* buf, int posx, int posy, int oldpage, int oldpo
 }
 
 void startEditor(HANDLE hout, wstring path) {
+	// предупреждение
+	static bool warn = false;
+	if (!warn) {
+		if (!showDialogWindowYN(hout, L"В процессе работы HEX-редактор сразу записывает изменения в файл,"
+			L"поэтому рекомендуем сделать копию файла. Вы согласны продолжить работу?", L"Предупреждение")) {
+			return;
+		}
+		warn = true;
+	}
+	// --------------
+
+	// показатель чтения
+	bool readOnly = false;
+	bool wasReadonly = false;
+	// -----------------
+
 	showStateString(L"Opening file...");
-	HANDLE f = CreateFile(path.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	// установка атрибута чтения в отключенный
+	DWORD attr = GetFileAttributesW(path.c_str());
+	if ((attr & FILE_ATTRIBUTE_READONLY) != 0) {
+		attr &= ~FILE_ATTRIBUTE_READONLY;
+		if (SetFileAttributesW(path.c_str(), attr)) {
+			wasReadonly = true;
+		}
+		else {
+			readOnly = true;
+		}
+	}
+	// ---------------------------------------
+	DWORD desiredAccess = GENERIC_READ;
+	if (!readOnly) desiredAccess |= GENERIC_WRITE;
+	HANDLE f = CreateFileW(path.c_str(), desiredAccess, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (f == INVALID_HANDLE_VALUE) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при открытии файла");
@@ -824,15 +890,27 @@ void startEditor(HANDLE hout, wstring path) {
 	DWORD size = GetFileSize(f, &sizeHigh_tpl);
 	uint64 sizeHigh = sizeHigh_tpl;
 	uint64 sizeSum = (sizeHigh * (0xFFFFFFFFULL + 1ULL)) + size, sizeCounter = sizeSum;
+
+	if (sizeSum == 0) {
+		showDialogWindowErrorOk(hout, L"Размер файла равен нулю, HEX-редактор не предназначен для добавления байтов", L"Предупреждение");
+		CloseHandle(f);
+		hideStateString();
+		return;
+	}
 	// ---------------------------
 
 	// выделение памяти, все супер
 	showStateString(L"Allocating memory...");
 	unsigned char *buffer = (unsigned char*) malloc(29 * 16);
-	if (!buffer) {
+	if (!buffer) { // эта ошибка никогда возможно не произойдет
 		showDialogWindowErrorOk(hout, L"Недостаточно памяти для открытия файла", L"Ошибка при открытии файла");
 		CloseHandle(f);
 		hideStateString();
+		if (wasReadonly) {
+			DWORD attr = GetFileAttributesW(path.c_str());
+			attr |= FILE_ATTRIBUTE_READONLY;
+			SetFileAttributesW(path.c_str(), attr);
+		}
 		return;
 	}
 	// ---------------------------
@@ -840,19 +918,6 @@ void startEditor(HANDLE hout, wstring path) {
 	// чтение файла
 	showStateString(L"Reading file");
 	DWORD readed;
-	/*unsigned char *bufferPointer = buffer;
-	while (sizeCounter != 0) {
-		if (!ReadFile(f, bufferPointer, min(1024 * 1024, sizeCounter), &readed, NULL)) {
-			DWORD e = GetLastError();
-			showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
-			CloseHandle(f);
-			free(buffer);
-			hideStateString();
-			return;
-		}
-		sizeCounter -= readed;
-		bufferPointer += readed;
-	}*/
 	if (!ReadFile(f, buffer, min (29 * 16, sizeSum), &readed, NULL)) {
 		DWORD e = GetLastError();
 		showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
@@ -863,11 +928,6 @@ void startEditor(HANDLE hout, wstring path) {
 	}
 	hideStateString();
 	// ------------
-
-	// показатели изменений
-	bool saveChanges = false;
-	bool hasChanges = true; // TODO false after debug
-	// --------------------
 
 	// отрисовка окна
 	SMALL_RECT brdr;
@@ -888,7 +948,7 @@ void startEditor(HANDLE hout, wstring path) {
 	else {
 		filename = path;
 	}
-	drawWindow(brd, 82, 36, TextWhite | BgGreen, L"HEX Editor - [" + filename + L"]");
+	drawWindow(brd, 82, 36, TextWhite | BgGreen, (readOnly ? L"HEX Editor [Read only] - [" : L"HEX Editor - [") + filename + L"]");
 	drawText(brd, 82 * 33 + 2, 78, L"\u25cf HOME to first pos \u25cf END to last pos");
 	drawText(brd, 82 * 34 + 2, 78, L"\u25cf ESC exit \u25cf ARROWS change position \u25cf TAB edit mode \u25cf ENTER goto address");
 	drawEditorTable(brd);
@@ -949,6 +1009,7 @@ void startEditor(HANDLE hout, wstring path) {
 				}
 			}
 			else if (b == 77) {
+JUMP:
 				if (mode == 0) {
 					if (!(globalpos == sizeSum - 1 && cursor == 1)) {
 						cursor = (cursor + 1) % 2;
@@ -980,17 +1041,7 @@ void startEditor(HANDLE hout, wstring path) {
 			}
 		}
 		else if (b == 27) {
-			if (hasChanges) {
-				int k = showDialogWindowYNC(hout, L"Сохранить изменения в файле " + filename + L"?", L"Вопрос");
-				if (k == 0) {
-					saveChanges = true;
-					break;
-				}
-				else if (k == 1) {
-					saveChanges = false;
-					break;
-				}
-			}
+			break;
 		}
 		else if (b == 13) {
 			auto input = showDialogWindowInputOkCancel(hout, L"Код адреса символа:", L"Ввод", validateInputAddress);
@@ -1008,39 +1059,52 @@ void startEditor(HANDLE hout, wstring path) {
 		}
 		else {
 #pragma region
+			if (!readOnly)
 			if (mode == 0) {
 				if (b >= '0' && b <= '9') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b - '0');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b - '0');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b - '0';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b - '0';
 					}
 					force = true;
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
+					// прыг на следующий символ
+					goto JUMP;
 				}
 				else if (b >= 'A' &&  b <= 'F') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'A');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b + 10 - 'A');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'A';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'A';
 					}
 					force = true;
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
+					// прыг на следующий символ
+					goto JUMP;
 				}
 				else if (b >= 'a' &&  b <= 'f') {
 					if (cursor == 0) {
-						buffer[globalpos] = (buffer[globalpos] & 0x0F) + 16 * (b + 10 - 'a');
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0x0F) + 16 * (b + 10 - 'a');
 					}
 					else {
-						buffer[globalpos] = (buffer[globalpos] & 0xF0) + b + 10 - 'a';
+						buffer[globalpos % (29 * 16)] = (buffer[globalpos % (29 * 16)] & 0xF0) + b + 10 - 'a';
 					}
 					force = true;
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
+					// прыг на следующий символ
+					goto JUMP;
 				}
 			}
 			else {
 				if (b >= 32 && b <= 126) {
-					buffer[globalpos] = b;
+					buffer[globalpos % (29 * 16)] = b;
 					force = true;
+					WriteByte(f, globalpos, buffer[globalpos % (29 * 16)]);
+					// прыг на следующий символ
+					goto JUMP;
 				}
 			}
 #pragma endregion Логика смены символа
@@ -1056,10 +1120,7 @@ void startEditor(HANDLE hout, wstring path) {
 			if (!ReadFile(f, buffer, min(29 * 16, sizeSum - 1), &readed, NULL)) {
 				DWORD e = GetLastError();
 				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при чтении файла");
-				CloseHandle(f);
-				free(buffer);
-				hideStateString();
-				return;
+				goto EXIT;
 			}
 		}
 
@@ -1112,26 +1173,15 @@ void startEditor(HANDLE hout, wstring path) {
 	}
 	delete brd;
 	hideCursor(hout);
-	// сохранение
-	showStateString(L"Saving changes...");
-	if (saveChanges) {
-		SetFilePointer(f, 0, 0, FILE_BEGIN);
-		DWORD written;
-		sizeCounter = sizeSum;
-		while (sizeCounter != 0) {
-			if (!WriteFile(f, buffer, sizeCounter, &written, NULL)) {
-				DWORD e = GetLastError();
-				showDialogWindowErrorOk(hout, errorCodeToString(e), L"Ошибка при записи файла");
-				break;
-			}
-			sizeCounter -= written;
-		}
-	}
-	showStateString(L"Deallocating memory...");
-	// очистка
+EXIT:
 	CloseHandle(f);
 	free(buffer);
 	hideStateString();
+	if (wasReadonly) {
+		DWORD attr = GetFileAttributesW(path.c_str());
+		attr |= FILE_ATTRIBUTE_READONLY;
+		SetFileAttributesW(path.c_str(), attr);
+	}
 	// -------
 	WriteConsoleOutputW(hout, old, { 82, 36 }, { 0,0 }, &brdr);
 	delete old;

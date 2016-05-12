@@ -1,6 +1,6 @@
 #include "files.h"
 #include "gui.h"
-
+#include <string>
 
 static DWORD globalErrorCode = 0;
 static wstring globalErrorFilename = L"";
@@ -24,6 +24,7 @@ bool getFiles(wstring path, vector<PWIN32_FIND_DATAW> &files)
 			continue;
 		}
 		// -----------------------
+		data->dwReserved1 = MAXDWORD;
 		files.push_back(data);
 		data = new WIN32_FIND_DATAW; // выделим память для данных
 	} while (FindNextFileW(handle, data));
@@ -188,4 +189,13 @@ DWORD getLastErrorCode()
 	DWORD n = globalErrorCode;
 	globalErrorCode = 0;
 	return n;
+}
+
+bool WriteByte(HANDLE f, uint64 pos, byte b)
+{
+	LARGE_INTEGER li;
+	li.QuadPart = pos;
+	SetFilePointer(f, li.LowPart, &li.HighPart, FILE_BEGIN);
+	DWORD written;
+	return WriteFile(f, &b, 1, &written, NULL) && written == 1;
 }
