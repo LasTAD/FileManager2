@@ -1,5 +1,6 @@
-
-#include "arch.h"
+#include "app.h"
+#include "gui.h"
+#include "files.h"
 #include <sstream>
 
 // Функция проверки имени файла/директории на правильность
@@ -216,7 +217,7 @@ void Console::work()
 			int b = _getch();
 			
 			if (b == 59) { // f1 help
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"42", L"Ответ на главный вопрос жизни, вселенной и всего такого");
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"42", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
 				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
@@ -255,7 +256,7 @@ void Console::work()
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии:", L"Копирование", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Copying...");
-					BOOL k = _copy(getPath() + files[pos]->cFileName, getPath() + input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+					BOOL k = _copy(getPath() + files[pos]->cFileName, input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 					hideStateString();
 					if (!k) {
 						showDialogWindowErrorOk(hout, L"Element: " + getLastErrorFilename() + L'\n' + errorCodeToString(getLastErrorCode()), L"Ошибка");
@@ -275,7 +276,7 @@ void Console::work()
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
@@ -295,7 +296,7 @@ void Console::work()
 					}
 				}
 			}
-			else if (b == 8888) { // f5 create dir
+			else if (b == 63) { // f5 create dir
 				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
@@ -322,28 +323,32 @@ void Console::work()
 					}
 				}
 			}
-			else if (b == 63) { // f6 архивация
+			else if (b == 64) { // f6 архивация
 			//TODO архивация и деархивация
-				Archive arc;
 				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
-				//if (!showDialogWindowYN(hout, L"Начать архивацию файла?", L"Архивация"))
-				if(1){
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя архива:", L"Архивация", validateFilename);
+				if (!input.canceled) {
 					showStateString(L"Archiving...");
-					arc.StartArch(getPath() + files[pos]->cFileName);
-					wstring fName = files[pos]->cFileName;
+					BOOL a=1;//TODO
 					hideStateString();
+					if (!a) {
+						DWORD val = GetLastError();
+						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+					}
+					else {
 						updateFiles();
 						for (int i = 0; i < (int)files.size(); ++i) {
-							if (wstring(files[i]->cFileName) == fName) {
+							if (wstring(files[i]->cFileName) == input.data) {
 								pos = i;
 								updatePages();
 								break;
 							}
 						}
 						drawFiles(true);
+					}
 				}
 			}
 		}

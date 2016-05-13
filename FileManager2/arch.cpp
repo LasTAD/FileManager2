@@ -4,18 +4,26 @@
 #include <vector>
 using namespace std;
 
-void Archive::StartArch(wstring & fileName)
+bool Archive::StartArch(wstring & fileName)
 {
-	wstring extens;
-	extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
-	if (extens == L"cmpr")
-		UnArch(fileName);
-	else 
-		Arch(fileName);
+	// TODO
+	//wstring extens;
+	//extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
+	/*if (extens == L"cmpr") 
+		if(!UnArch(fileName))
+			return false;
+	else
+		if(!Arch(fileName))
+			return false;*/
+	Arch(fileName);
+		return true;
 }
 
 bool Archive::Arch(wstring &fileName)
 {
+	DWORD dwTemp=0;
+	int quant = 0;
+	int weight[0x100];
 	for (auto &i : weight)
 		i = 0;
 	{
@@ -33,14 +41,11 @@ bool Archive::Arch(wstring &fileName)
 			if (!ReadFile(f, &ch, sizeof(ch), &dwTemp, NULL)) {
 				DWORD err = GetLastError();
 				showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-				CloseHandle(f);
 				return false;
 			}
 			++weight[ch];
 		} 
-		CloseHandle(f);
 	}
-
 	multimap<int, int> sortedWeight;
 	vector<Node> tree;
 	map<char, int> charMap;
@@ -50,7 +55,8 @@ bool Archive::Arch(wstring &fileName)
 		{
 			tree.push_back(Node{ (char)i,-1,-1,-1,false });
 			charMap[i] = tree.size() - 1;
-			sortedWeight.insert(make_pair(weight[i], tree.size() - 1));
+			sortedWeight.insert(make_pair(weight[i], tree
+				.size() - 1));
 		}
 	}
 	while (sortedWeight.size() > 1)
@@ -83,7 +89,6 @@ bool Archive::Arch(wstring &fileName)
 			if (!ReadFile(f, &ch, sizeof(char), &dwTemp, NULL)) {
 				DWORD err = GetLastError();
 				showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-				CloseHandle(f);
 				return false;
 			}
 			vector<bool> compressedChar;
@@ -95,7 +100,6 @@ bool Archive::Arch(wstring &fileName)
 			}
 			data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
 		}
-		CloseHandle(f);
 	}
 	HANDLE fa = CreateFileW((fileName + L"cmpr").c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fa == INVALID_HANDLE_VALUE) {
@@ -106,25 +110,16 @@ bool Archive::Arch(wstring &fileName)
 	}
 	--quant;
 	if (!WriteFile(fa, (char*)&quant, sizeof(quant), &dwTemp, NULL)) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при записи файла");
-		CloseHandle(fa);
 		return false;
 	}
 	//f.write((char*)&quant, sizeof(quant));
 	int treeSize = tree.size();
 	if (!WriteFile(fa, (char*)&treeSize, sizeof(treeSize), &dwTemp, NULL)) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при записи файла");
-		CloseHandle(fa);
 		return false;
 	}
 	//f.write((char*)&treeSize, sizeof(treeSize));
 	for (auto i : tree) {
 		if (!WriteFile(fa, (char*)&i, sizeof(i), &dwTemp, NULL)) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при записи файла");
-			CloseHandle(fa);
 			return false;
 		}
 	}
@@ -138,9 +133,6 @@ bool Archive::Arch(wstring &fileName)
 				if (data[i * 8 + j])
 					ch |= (1 << j);
 		if (!WriteFile(fa, (char*)&ch, sizeof(ch), &dwTemp, NULL)) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при записи файла");
-			CloseHandle(fa);
 			return false;
 		}
 		//f.write((char*)&ch, sizeof(ch));
@@ -148,95 +140,49 @@ bool Archive::Arch(wstring &fileName)
 	CloseHandle(fa);
 }
 
-bool Archive::UnArch(wstring &fileName)
-{
-	vector<Node> tree;
-	//ifstream f(fileName, ios::binary);
-	HANDLE fa = CreateFileW(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (fa == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при открытии файла");
-		CloseHandle(fa);
-		return false;
-	}
-
-	//f.read((char*)&quant, sizeof(quant));
-	if (!ReadFile(fa, (char*)&quant, sizeof(quant), &dwTemp, NULL)) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-		CloseHandle(fa);
-		return false;
-	}
-	int treeSize;
-	//f.read((char*)&treeSize, sizeof(treeSize));
-	if (!ReadFile(fa, (char*)&treeSize, sizeof(treeSize), &dwTemp, NULL)) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-		CloseHandle(fa);
-		return false;
-	}
-	for (int i = 0; i < treeSize; ++i)
-	{
-		Node n;
-		//f.read((char*)&n, sizeof(n));
-		if (!ReadFile(fa, (char*)&n, sizeof(n), &dwTemp, NULL)) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-			CloseHandle(fa);
-			return false;
-		}
-		tree.push_back(n);
-	}
-	vector<bool> data;
-	while (dwTemp)
-	{
-		unsigned char ch;
-		//f.read((char *)&ch, sizeof(ch));
-		if (!ReadFile(fa, (char *)&ch, sizeof(ch), &dwTemp, NULL)) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-			CloseHandle(fa);
-			return false;
-		}
-		for (int i = 0; i < 8; ++i)
-			data.push_back((ch&(1 << i)) != 0);
-
-	}
-	auto n = tree.size() - 1;
-	CloseHandle(fa);
-	wstring unCompFile;
-	unCompFile = fileName.substr(0, fileName.length()-4);
-	
-	//ofstream f1(unCompFile);
-	HANDLE f = CreateFileW(unCompFile.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при открытии файла");
-		CloseHandle(f);
-		return false;
-	}
-	for (auto i : data)
-	{
-		if (i)
-			n = tree[n].one;
-		else
-			n = tree[n].zero;
-		if (tree[n].one == -1)
-		{
-			if (quant--)
-			{
-				//f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
-				if (!WriteFile(f, (char*)&tree[n].ch, sizeof(treeSize), &dwTemp, NULL)) {
-					DWORD err = GetLastError();
-					showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при записи файла");
-					CloseHandle(f);
-					return false;
-				}
-				n = tree.size() - 1;
-			}
-			else break;
-		}
-	}
-	CloseHandle(f);
-}
-
+//bool Archive::UnArch(wstring &fileName)
+//{
+//	vector<Node> tree;
+//	ifstream f(fileName, ios::binary);
+//	unsigned int quant;
+//	f.read((char*)&quant, sizeof(quant));
+//	int treeSize;
+//	f.read((char*)&treeSize, sizeof(treeSize));
+//	for (int i = 0; i < treeSize; ++i)
+//	{
+//		Node n;
+//		f.read((char*)&n, sizeof(n));
+//		tree.push_back(n);
+//	}
+//	vector<bool> data;
+//	while (!f.eof())
+//	{
+//		unsigned char ch;
+//		f.read((char *)&ch, sizeof(ch));
+//		for (int i = 0; i < 8; ++i)
+//			data.push_back((ch&(1 << i)) != 0);
+//
+//	}
+//	auto n = tree.size() - 1;
+//	
+//	wstring unCompFile;
+//	unCompFile = fileName.substr(0, fileName.length()-4);
+//	
+//	ofstream f1(unCompFile);
+//	for (auto i : data)
+//	{
+//		if (i)
+//			n = tree[n].one;
+//		else
+//			n = tree[n].zero;
+//		if (tree[n].one == -1)
+//		{
+//			if (quant--)
+//			{
+//				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+//				n = tree.size() - 1;
+//			}
+//			else break;
+//		}
+//	}
+//}

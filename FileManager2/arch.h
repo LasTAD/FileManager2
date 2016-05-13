@@ -14,13 +14,9 @@ struct Node {
 };
 class Archive {
 public:
-	DWORD dwTemp = 0;
-	int quant = 0;
-	int weight[0x100];
-public:
-	void StartArch(wstring &);
+	bool StartArch(wstring &);
 private:
 	bool Arch(wstring &);
-	bool UnArch(wstring &);
+	//bool UnArch(wstring &);
 
 };
