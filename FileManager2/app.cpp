@@ -233,9 +233,9 @@ void Console::work()
 					wstring newp = getPath() + input.data;
 					showStateString(L"Renaming element...");
 					BOOL r = MoveFileW(oldp.c_str(), newp.c_str());
+					DWORD val = GetLastError();
 					hideStateString();
 					if (!r) {
-						DWORD val = GetLastError();
 						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
 					}
 					else {
@@ -263,8 +263,7 @@ void Console::work()
 					BOOL k = _copy(getPath() + files[pos]->cFileName, input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 					hideStateString();
 					if (!k) {
-						DWORD val = GetLastError();
-						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+						showDialogWindowErrorOk(hout, L"Element: " + getLastErrorFilename() + L'\n' + errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
 					else {
 						updateFiles();
@@ -288,12 +287,11 @@ void Console::work()
 				if (showDialogWindowYN(hout, L"Действительно удалить этот элемент?", L"Вопрос")) {
 					showStateString(L"Deleting element...");
 					bool r = removeFile(getPath() + files[pos]->cFileName, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+					hideStateString();
 					if (!r) {
-						hideStateString();
 						showDialogWindowErrorOk(hout, L"Element: " + getLastErrorFilename() + L'\n' + errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
 					else {
-						hideStateString();
 						int oldpos = pos;
 						updateFiles();
 						pos = oldpos--;
@@ -307,7 +305,7 @@ void Console::work()
 					showDialogWindowErrorOk(hout, L"Создание директории здесь невозможно", L"Ошибка");
 					continue;
 				}
-				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Переименование", validateFilename);
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Создание директории", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Creating directory...");
 					BOOL r = CreateDirectoryW(wstring(getPath() + input.data).c_str(), NULL);

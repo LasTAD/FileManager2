@@ -73,7 +73,12 @@ bool removeFile(wstring path, bool isDir)
 		WIN32_FIND_DATAW data;
 		HANDLE handle = FindFirstFileW(wstring(path + L"\\*.*").c_str(), &data);
 		if (handle == INVALID_HANDLE_VALUE) {
-			return RemoveDirectoryW(path.c_str());
+			bool k = RemoveDirectoryW(path.c_str());
+			if (!k) {
+				setLastErrorCode(GetLastError());
+				setLastErrorFilename(path);
+			}
+			return k;
 		}
 		do {
 			// отсечение модификаторов
