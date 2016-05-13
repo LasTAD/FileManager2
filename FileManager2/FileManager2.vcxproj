@@ -150,12 +150,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="arch.cpp" />
     <ClCompile Include="files.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
+    <ClInclude Include="arch.h" />
     <ClInclude Include="files.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="types.h" />

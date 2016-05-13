@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "files.h"
+#include "app.h"
 #include "types.h"
 #include <exception>
 #include <sstream>
@@ -729,12 +730,12 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 		}
 
 		drawText(names, i * 84, 84, files[f]->cFileName);
-		if (files[f]->dwReserved1 != 0 && files[f]->dwReserved1 != 1 && files[f]->dwReserved1 != 2 && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		if (files[f]->dwReserved1 != dotdot && files[f]->dwReserved1 != fold && files[f]->dwReserved1 != drive && !(files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			uint64 size = ((files[f]->nFileSizeHigh * (0xFFFFFFFFULL + 1ULL)) + files[f]->nFileSizeLow);
 			drawText(sizes, i * 20, 20, to_wstring(size) + L" B");
 		}
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			if (files[f]->dwReserved1 == 1) {
+			if (files[f]->dwReserved1 == fold) {
 				wstringstream wss; wss << files[f]->nFileSizeLow << L" files, " << files[f]->nFileSizeHigh << L" folders";
 				drawText(sizes, i * 20, 20, wss.str());
 			}
@@ -746,8 +747,8 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 			drawText(sizes, i * 20, 20, L"");
 		}
 		wstring type = L"File";
-		if (files[f]->dwReserved1 == 1) type = L"";
-		if (files[f]->dwReserved1 == 2) type = L"Drive";
+		if (files[f]->dwReserved1 == fold) type = L"";
+		if (files[f]->dwReserved1 == drive) type = L"Drive";
 		else if (files[f]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) type = L"Directory";
 		drawText(types, i * 20, 20, type);
 	}

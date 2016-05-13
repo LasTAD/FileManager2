@@ -4,11 +4,10 @@
 #include <sstream>
 
 // Функция проверки имени файла/директории на правильность
-// todo проверка директории
 bool validateFilename(wstring str) {
-	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&/*str.find(L'\\') == wstring::npos &&*/
-		/*str.find(L':') == wstring::npos &&*/str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
-		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos/* &&str.find(L'/') == wstring::npos*/) return true;
+	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&
+		str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
+		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos) return true;
 	return false;
 }
 
@@ -28,7 +27,7 @@ Console::Console()
 	// И спрячем курсор
 	hideCursor(hout);
 	// Заблокируем возможность изменения размера
-	DWORD newStyle = GetWindowLong(GetConsoleWindow(), GWL_STYLE); // В гугле ничего не нашел, пришлось поиздеваться над WinAPI, вуаля - все пашет
+	DWORD newStyle = GetWindowLong(GetConsoleWindow(), GWL_STYLE); 
 	newStyle &= ~WS_MAXIMIZEBOX;
 	newStyle &= ~WS_SIZEBOX;
 	SetWindowLong(GetConsoleWindow(), GWL_STYLE, newStyle);
@@ -44,7 +43,7 @@ void Console::updatePages()
 	last = min(fpp * (page + 1) - 1, (int)files.size() - 1);
 }
 
-// пашет, если уже гарантируется, что доступ к дирке есть
+//отрабатывает только при гарантированном доступе к директории
 void Console::updateFiles()
 {
 	showStateString(L"Parsing dir...");
@@ -56,7 +55,7 @@ void Console::updateFiles()
 		files.clear();
 		if (path.size() > 0) { // если мы листуем не диски, то назад вернуться можно
 			PWIN32_FIND_DATAW dd = new WIN32_FIND_DATAW;
-			dd->dwReserved1 = 0;
+			dd->dwReserved1 = dotdot;
 			dd->cFileName[0] = L'.';
 			dd->cFileName[1] = L'.';
 			dd->cFileName[2] = 0;
@@ -68,7 +67,7 @@ void Console::updateFiles()
 			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				auto ce = countFiles(getPath() + f->cFileName + L"\\");
 				if (ce.all != -1) {
-					f->dwReserved1 = true;
+					f->dwReserved1 = fold;
 					f->nFileSizeLow = ce.files;
 					f->nFileSizeHigh = ce.dirs;
 				}
@@ -80,7 +79,7 @@ void Console::updateFiles()
 	else {
 		wchar_t drives[128];
 		DWORD count = GetLogicalDriveStringsW(128, drives);
-		// проверка на ошибки, ну на всякий
+		// проверка на ошибки
 		if (count == 0) {
 			showDialogWindowErrorOk(hout, L"Не удалось получить список носителей. Программа будет закрыта", L"Ошибка");
 			exit(0);
@@ -90,7 +89,7 @@ void Console::updateFiles()
 		files.clear();
 		for (DWORD i = 0; i < count; i += 4) {
 			PWIN32_FIND_DATAW d = new WIN32_FIND_DATAW;
-			d->dwReserved1 = 2;
+			d->dwReserved1 = drive;
 			d->cFileName[0] = drives[i];
 			d->cFileName[1] = 0;
 			d->dwFileAttributes = 0;
@@ -131,11 +130,9 @@ void Console::work()
 {
 	// переменная для смещения пути
 	int path_shift = 0;
-
 	// однократная отрисовка окна
 	drawWindowFM(hout);
 	// --------------------------
-
 	// установка текущей директории
 	wchar_t *dir = new wchar_t[1024];
 	if (GetCurrentDirectoryW(1024, dir) != 0) {
@@ -152,23 +149,23 @@ void Console::work()
 	delete dir;
 	updateFiles();
 	// ----------------------------
-
 	// отрисовка файлов и директории
 	drawFiles();
 	drawPath(hout, getPath(), path_shift);
 	// ----------------------------
-
 	while (true) {
 		int b = _getch();
 		if (b == 0xE0) {
 			b = _getch();
 
 #pragma region
+			//наверх
 			if (b == 72) {
 				pos--;
 				updatePages();
 				drawFiles();
 			}
+			//вниз
 			else if (b == 80) {
 				pos++;
 				updatePages();
@@ -220,10 +217,10 @@ void Console::work()
 			int b = _getch();
 			
 			if (b == 59) { // f1 help
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"В\nMcDonalds\nлучше\nне\nобедать", L"Сообщение от разработчиков");
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"42", L"Сообщение от разработчиков");
 			}
 			else if (b == 60) { // f2 rename
-				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
+				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
@@ -252,8 +249,7 @@ void Console::work()
 				}
 			}
 			else if (b == 61) { // f3 copy
-				// TODO
-				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию копирования", L"Ошибка");
 					continue;
 				}
@@ -281,7 +277,7 @@ void Console::work()
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved1 == 1 || files[pos]->dwReserved1 == 2 || files[pos]->dwReserved1 == 0) {
+				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
@@ -303,8 +299,8 @@ void Console::work()
 				}
 			}
 			else if (b == 63) { // f5 create dir
-				if (path.size() == 0) {
-					showDialogWindowErrorOk(hout, L"Создание директории здесь невозможно", L"Ошибка");
+				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Переименование", validateFilename);
@@ -329,15 +325,43 @@ void Console::work()
 					}
 				}
 			}
+			else if (b == 64) { // f6 архивация
+			//TODO архивация и деархивация
+				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
+					continue;
+				}
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя архива:", L"Архивация", validateFilename);
+				if (!input.canceled) {
+					showStateString(L"Archiving...");
+					BOOL a=1;//TODO
+					hideStateString();
+					if (!a) {
+						DWORD val = GetLastError();
+						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+					}
+					else {
+						updateFiles();
+						for (int i = 0; i < (int)files.size(); ++i) {
+							if (wstring(files[i]->cFileName) == input.data) {
+								pos = i;
+								updatePages();
+								break;
+							}
+						}
+						drawFiles(true);
+					}
+				}
+			}
 		}
 		// вход в папку
 		else if (b == 13) {
-			if (files[pos]->dwReserved1 == 0) {
+			if (files[pos]->dwReserved1 == dotdot) {
 				path.pop_back();
 				updateFiles();
 				drawFiles();
 			}
-			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != 2 && files[pos]->dwReserved1 != 1) {
+			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != drive && files[pos]->dwReserved1 != fold) {
 				startEditor(hout, getPath() + files[pos]->cFileName);
 				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}

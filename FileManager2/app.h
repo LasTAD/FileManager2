@@ -1,13 +1,16 @@
 #pragma once
-
 #include <Windows.h>
 #include <iostream>
 #include <string>
 #include <conio.h>
 #include <vector>
-
-
 using namespace std;
+
+enum fType {
+	dotdot = 0,
+	fold = 1,
+	drive = 2
+};
 
 class Console {
 	HANDLE hin, hout;
