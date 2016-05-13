@@ -4,48 +4,34 @@
 #include <vector>
 using namespace std;
 
-bool Archive::StartArch(wstring & fileName)
+void Archive::StartArch(wstring & fileName, int isFile)
 {
 	// TODO
-	//wstring extens;
-	//extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
-	/*if (extens == L"cmpr") 
-		if(!UnArch(fileName))
-			return false;
+	wstring extens;
+	extens = fileName.substr(fileName.length() - 4, fileName.length() - 1);
+	if (extens == L"cmpr") 
+		UnArch(fileName);
 	else
-		if(!Arch(fileName))
-			return false;*/
-	Arch(fileName);
-		return true;
+		Arch(fileName);
 }
 
-bool Archive::Arch(wstring &fileName)
+void Archive::Arch(wstring &fileName)
 {
-	DWORD dwTemp=0;
 	int quant = 0;
 	int weight[0x100];
 	for (auto &i : weight)
 		i = 0;
 	{
-		HANDLE f = CreateFileW(fileName.c_str(), GENERIC_READ,FILE_SHARE_READ, NULL, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL, NULL);
-		if (f == INVALID_HANDLE_VALUE) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при открытии файла");
-			CloseHandle(f);
-			return false;
-		}
-		while (dwTemp)
+		ifstream f(fileName);
+		while (!f.eof())
 		{
 			++quant;
-			char ch;
-			if (!ReadFile(f, &ch, sizeof(ch), &dwTemp, NULL)) {
-				DWORD err = GetLastError();
-				showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-				return false;
-			}
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
 			++weight[ch];
-		} 
+		}
 	}
+
 	multimap<int, int> sortedWeight;
 	vector<Node> tree;
 	map<char, int> charMap;
@@ -76,23 +62,14 @@ bool Archive::Arch(wstring &fileName)
 	}
 	vector<bool> data;
 	{
-		HANDLE f = CreateFileW(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (f == INVALID_HANDLE_VALUE) {
-			DWORD err = GetLastError();
-			showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при открытии файла");
-			CloseHandle(f);
-			return false;
-		}
-		while (dwTemp)
+		ifstream f(fileName, ios::binary);
+		while (!f.eof())
 		{
-			char ch;
-			if (!ReadFile(f, &ch, sizeof(char), &dwTemp, NULL)) {
-				DWORD err = GetLastError();
-				showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при чтении файла");
-				return false;
-			}
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
 			vector<bool> compressedChar;
 			auto n = tree[charMap[ch]];
+
 			while (n.parent != -1)
 			{
 				compressedChar.push_back(n.branch);
@@ -101,88 +78,68 @@ bool Archive::Arch(wstring &fileName)
 			data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
 		}
 	}
-	HANDLE fa = CreateFileW((fileName + L"cmpr").c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (fa == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		showDialogWindowErrorOk(GetStdHandle(STD_OUTPUT_HANDLE), errorCodeToString(err), L"Ошибка при открытии файла");
-		CloseHandle(fa);
-		return false;
-	}
+	ofstream f(fileName+L"cmpr", ios::binary);
 	--quant;
-	if (!WriteFile(fa, (char*)&quant, sizeof(quant), &dwTemp, NULL)) {
-		return false;
-	}
-	//f.write((char*)&quant, sizeof(quant));
+	f.write((char*)&quant, sizeof(quant));
 	int treeSize = tree.size();
-	if (!WriteFile(fa, (char*)&treeSize, sizeof(treeSize), &dwTemp, NULL)) {
-		return false;
-	}
-	//f.write((char*)&treeSize, sizeof(treeSize));
-	for (auto i : tree) {
-		if (!WriteFile(fa, (char*)&i, sizeof(i), &dwTemp, NULL)) {
-			return false;
-		}
-	}
-		//f.write((char*)&i, sizeof(i));
+	f.write((char*)&treeSize, sizeof(treeSize));
+	for (auto i : tree)
+		f.write((char*)&i, sizeof(i));
 	for (size_t i = 0; i <= data.size() / 8; ++i)
 	{
-		wchar_t ch = 0;
+		unsigned char ch = 0;
 		for (int j = 0; j < 8; ++j)
 			if ((i * 8 + j) >= data.size()) break;
 			else
 				if (data[i * 8 + j])
 					ch |= (1 << j);
-		if (!WriteFile(fa, (char*)&ch, sizeof(ch), &dwTemp, NULL)) {
-			return false;
-		}
-		//f.write((char*)&ch, sizeof(ch));
+		f.write((char*)&ch, sizeof(ch));
 	}
-	CloseHandle(fa);
 }
 
-//bool Archive::UnArch(wstring &fileName)
-//{
-//	vector<Node> tree;
-//	ifstream f(fileName, ios::binary);
-//	unsigned int quant;
-//	f.read((char*)&quant, sizeof(quant));
-//	int treeSize;
-//	f.read((char*)&treeSize, sizeof(treeSize));
-//	for (int i = 0; i < treeSize; ++i)
-//	{
-//		Node n;
-//		f.read((char*)&n, sizeof(n));
-//		tree.push_back(n);
-//	}
-//	vector<bool> data;
-//	while (!f.eof())
-//	{
-//		unsigned char ch;
-//		f.read((char *)&ch, sizeof(ch));
-//		for (int i = 0; i < 8; ++i)
-//			data.push_back((ch&(1 << i)) != 0);
-//
-//	}
-//	auto n = tree.size() - 1;
-//	
-//	wstring unCompFile;
-//	unCompFile = fileName.substr(0, fileName.length()-4);
-//	
-//	ofstream f1(unCompFile);
-//	for (auto i : data)
-//	{
-//		if (i)
-//			n = tree[n].one;
-//		else
-//			n = tree[n].zero;
-//		if (tree[n].one == -1)
-//		{
-//			if (quant--)
-//			{
-//				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
-//				n = tree.size() - 1;
-//			}
-//			else break;
-//		}
-//	}
-//}
+void Archive::UnArch(wstring &fileName)
+{
+	vector<Node> tree;
+	ifstream f(fileName, ios::binary);
+	unsigned int quant;
+	f.read((char*)&quant, sizeof(quant));
+	int treeSize;
+	f.read((char*)&treeSize, sizeof(treeSize));
+	for (int i = 0; i < treeSize; ++i)
+	{
+		Node n;
+		f.read((char*)&n, sizeof(n));
+		tree.push_back(n);
+	}
+	vector<bool> data;
+	while (!f.eof())
+	{
+		unsigned char ch;
+		f.read((char *)&ch, sizeof(ch));
+		for (int i = 0; i < 8; ++i)
+			data.push_back((ch&(1 << i)) != 0);
+
+	}
+	auto n = tree.size() - 1;
+	
+	wstring unCompFile;
+	unCompFile = fileName.substr(0, fileName.length()-4);
+	
+	ofstream f1(unCompFile);
+	for (auto i : data)
+	{
+		if (i)
+			n = tree[n].one;
+		else
+			n = tree[n].zero;
+		if (tree[n].one == -1)
+		{
+			if (quant--)
+			{
+				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+				n = tree.size() - 1;
+			}
+			else break;
+		}
+	}
+}
