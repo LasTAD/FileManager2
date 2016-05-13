@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-void Archive::StartArch(wstring & fileName, int isFile)
+void Archive::StartArch(wstring & fileName)
 {
 	// TODO
 	wstring extens;

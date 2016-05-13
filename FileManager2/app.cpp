@@ -1,13 +1,19 @@
 #include "app.h"
 #include "gui.h"
 #include "files.h"
+#include "arch.h"
 #include <sstream>
 
 // Функция проверки имени файла/директории на правильность
 bool validateFilename(wstring str) {
-	if (str.length() > 0 && str.find(L'*') == wstring::npos && str.find(L'|') == wstring::npos &&
-		str.find(L'"') == wstring::npos &&str.find(L'<') == wstring::npos &&
-		str.find(L'>') == wstring::npos &&str.find(L'?') == wstring::npos) return true;
+	if (str.length() > 0 && 
+		str.find(L'*') == wstring::npos && 
+		str.find(L'|') == wstring::npos &&
+		str.find(L'"') == wstring::npos &&
+		str.find(L'<') == wstring::npos &&
+		str.find(L'>') == wstring::npos &&
+		str.find(L'?') == wstring::npos) 
+			return true;
 	return false;
 }
 
@@ -33,7 +39,7 @@ Console::Console()
 	SetWindowLong(GetConsoleWindow(), GWL_STYLE, newStyle);
 	SetWindowPos(GetConsoleWindow(), NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
 }
-
+//перелистывание страниц
 void Console::updatePages()
 {
 	if (pos < 0) pos = (int)files.size() - 1;
@@ -256,7 +262,7 @@ void Console::work()
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя для копии:", L"Копирование", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Copying...");
-					BOOL k = _copy(getPath() + files[pos]->cFileName, input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+					BOOL k = _copy(getPath() + files[pos]->cFileName, getPath() + input.data, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 					hideStateString();
 					if (!k) {
 						showDialogWindowErrorOk(hout, L"Element: " + getLastErrorFilename() + L'\n' + errorCodeToString(getLastErrorCode()), L"Ошибка");
@@ -276,7 +282,7 @@ void Console::work()
 			}
 
 			else if (b == 62) { // f4 delete
-				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
@@ -329,26 +335,23 @@ void Console::work()
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
-				auto input = showDialogWindowInputOkCancel(hout, L"Введите имя архива:", L"Архивация", validateFilename);
-				if (!input.canceled) {
+				
+				if (!showDialogWindowYN(hout,L"Произвести архивацию/разархивацию?",L"Архивация")) {
 					showStateString(L"Archiving...");
-					BOOL a=1;//TODO
+					Archive arc;
+					arc.StartArch(getPath() + files[pos]->cFileName);
 					hideStateString();
-					if (!a) {
-						DWORD val = GetLastError();
-						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
-					}
-					else {
+					wstring arcName = files[pos]->cFileName;
 						updateFiles();
 						for (int i = 0; i < (int)files.size(); ++i) {
-							if (wstring(files[i]->cFileName) == input.data) {
+							if (wstring(files[i]->cFileName) == arcName) {
 								pos = i;
 								updatePages();
 								break;
 							}
 						}
 						drawFiles(true);
-					}
+					
 				}
 			}
 		}

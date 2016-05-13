@@ -12,7 +12,7 @@ struct Node {
 };
 class Archive {
 public:
-	void StartArch(wstring &, int);
+	void StartArch(wstring &);
 private:
 	void Arch(wstring &);
 	void UnArch(wstring &);

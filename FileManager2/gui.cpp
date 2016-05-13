@@ -5,10 +5,9 @@
 #include <exception>
 #include <sstream>
 
-wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIRECTORY";
+wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIRECTORY \u25cf F6 ARCHIVING";
 
 // функция для подсчета необходимого количества строк в окне
-// проверена, оптимизирована
 int estimateString(wstring str, int onestrlen, int maxstrlen = -1) {
 	int counter = 1;
 	for (int i = 0, j = 1; i < str.length(); ++i, ++j) {
@@ -20,8 +19,7 @@ int estimateString(wstring str, int onestrlen, int maxstrlen = -1) {
 	return maxstrlen == -1 ? counter : min(maxstrlen, counter);
 }
 
-// функция для преобразования числа в шестнадцатеричную строку; неизвестно, как поведет себя с вещественными типами
-// проверена, оптимизирована
+// функция для преобразования числа в шестнадцатеричную строку
 template<typename ___int>
 wstring intToHexString(___int i, int length = 0) {
 	wchar_t *buf = new wchar_t[max(17, length)];
@@ -39,7 +37,6 @@ wstring intToHexString(___int i, int length = 0) {
 }
 
 // функция для преобразования шестнадцатеричного в число
-// проверена
 uint64 stringToInt(wstring s) {
 	if (s.length() == 0) return 0;
 	uint64 n = 0;
@@ -82,7 +79,6 @@ uint64 stringToInt(wstring s) {
 }
 
 // функция проверки введенного адреса
-// проверена
 bool validateInputAddress(wstring s) {
 	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { // hex
 		s = s.substr(2);
@@ -104,7 +100,6 @@ bool validateInputAddress(wstring s) {
 	return true;
 }
 
-// проверена
 void showCursor(HANDLE hout, DWORD size)
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -113,7 +108,6 @@ void showCursor(HANDLE hout, DWORD size)
 	SetConsoleCursorInfo(hout, &cci);
 }
 
-// проверена
 void hideCursor(HANDLE hout)
 {
 	CONSOLE_CURSOR_INFO cci;
@@ -122,7 +116,6 @@ void hideCursor(HANDLE hout)
 	SetConsoleCursorInfo(hout, &cci);
 }
 
-// проверена
 void setCursorPosition(HANDLE hout, short x, short y)
 {
 	SetConsoleCursorPosition(hout, { x,y });
