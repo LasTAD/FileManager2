@@ -165,13 +165,22 @@ bool copyDir(wstring from, wstring to)
 		wstring res1= to.substr(pos + 1, to.length() - pos - 1);
 		if (data.cFileName == res1)
 			continue;
+		// -----------------------
 		bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
 		if (dir) {
-			CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
+			if (!CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL)) {
+				setLastErrorCode(GetLastError());
+				setLastErrorFilename(to + L"\\" + data.cFileName);
+				return false;
+			}
 			copyDir((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str());
 		}
 		else {
-			CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true);
+			if (!CopyFileW((from + L"\\" + data.cFileName).c_str(), (to + L"\\" + data.cFileName).c_str(), true)) {
+				setLastErrorCode(GetLastError());
+				setLastErrorFilename(to + L"\\" + data.cFileName);
+				return false;
+			}
 		}
 	} while (FindNextFileW(handle, &data) != NULL);
 	FindClose(handle);

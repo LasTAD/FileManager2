@@ -216,7 +216,6 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 {
 	// значение выбранной кнопочки
 	bool key = false;
-
 	short strcount = estimateString(text, 60, 32);
 	CHAR_INFO *old = new CHAR_INFO[64 * (6 + strcount)];
 	SMALL_RECT sr;
@@ -225,13 +224,10 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 	sr.Right = 95;
 	sr.Bottom = 23 + strcount / 2;
 	ReadConsoleOutputW(hout, old, { 64, 6 + strcount }, { 0, 0 }, &sr);
-
 	CHAR_INFO *wnd = new CHAR_INFO[64 * (6 + strcount)];
-
 	// рамка окна
 	drawWindow(wnd, 64, 6 + strcount, TextWhite | BgBlue, caption);
 	// ----------
-
 	// отрисовка многострочного текста
 	int sc = 1;
 	wstring tail = text;
@@ -260,8 +256,6 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 		++sc;
 	}
 	// -------------------------------
-	
-	
 	// кнопки
 	drawText(wnd, 64 * (3+strcount) + 3, 2, L"Да");
 	fillColor(wnd, 64 * (3+strcount) + 2, 4, TextWhite | BgBlue);
