@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
-
+#include "app.h"
+#include "files.h"
+#include "gui.h"
 using namespace std;
 
 struct Node {
@@ -12,9 +14,9 @@ struct Node {
 };
 class Archive {
 public:
-	void StartArch(wstring &, int);
+	bool StartArch(wstring &);
 private:
-	void Arch(wstring &);
-	void UnArch(wstring &);
+	bool Arch(wstring &);
+	//bool UnArch(wstring &);
 
 };
