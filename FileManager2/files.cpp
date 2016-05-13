@@ -161,6 +161,10 @@ bool copyDir(wstring from, wstring to)
 			continue;
 		}
 		// -----------------------
+		size_t pos = to.find_last_of(L'\\', to.length());
+		wstring res1= to.substr(pos + 1, to.length() - pos - 1);
+		if (data.cFileName == res1)
+			continue;
 		bool dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? true : false;
 		if (dir) {
 			CreateDirectoryW((to + L"\\" + data.cFileName).c_str(), NULL);
