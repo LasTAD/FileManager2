@@ -322,18 +322,14 @@ void Console::work()
 				}
 			}
 			else if (b == 63) { // f5 create dir
-				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
-					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
-					continue;
-				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Создание директории", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Creating directory...");
 					BOOL r = CreateDirectoryW(wstring(getPath() + input.data).c_str(), NULL);
+					setLastErrorCode(GetLastError());
 					hideStateString();
 					if (!r) {
-						DWORD val = GetLastError();
-						showDialogWindowErrorOk(hout, errorCodeToString(val), L"Ошибка");
+						showDialogWindowErrorOk(hout, errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
 					else {
 						updateFiles();
@@ -349,28 +345,38 @@ void Console::work()
 				}
 			}
 			else if (b == 64) { // f6 архивация
-			//TODO архивация и деархивация
 				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
-				
-				if (!showDialogWindowYN(hout,L"Произвести архивацию/разархивацию?",L"Архивация")) {
-					showStateString(L"Archiving...");
-					Archive arc;
-					arc.StartArch(getPath() + files[pos]->cFileName);
-					hideStateString();
-					wstring arcName = files[pos]->cFileName;
+
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя архива:", L"Создание архива", validateFilename);
+				if (!input.canceled) {
+					showStateString(L"Creating arch...");
+					wstring nf;
+					if (input.data.find(L'\\') == wstring::npos) {
+						nf = getPath() + input.data;
+					}
+					else {
+						nf = input.data;
+					}
+
+					if (!encryptRLE(getPath() + files[pos]->cFileName, nf)) {
+						hideStateString();
+						showDialogWindowErrorOk(hout, L"Не удалось создать архив: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
+					}
+					else {
+						hideStateString();
 						updateFiles();
 						for (int i = 0; i < (int)files.size(); ++i) {
-							if (wstring(files[i]->cFileName) == arcName) {
+							if (wstring(files[i]->cFileName) == input.data) {
 								pos = i;
 								updatePages();
 								break;
 							}
 						}
 						drawFiles(true);
-					
+					}
 				}
 			}
 		}
