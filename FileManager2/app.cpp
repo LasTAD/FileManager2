@@ -13,12 +13,25 @@ bool validateFilename(wstring str) {
 		str.find(L'<') == wstring::npos &&
 		str.find(L'>') == wstring::npos &&
 		str.find(L'/') == wstring::npos &&
-		str.find(L':') == wstring::npos &&
 		str.find(L'?') == wstring::npos) 
 			return true;
 	return false;
 }
 
+bool validateFilename2(wstring str) {
+	if (str.length() > 0 &&
+		str.find(L'*') == wstring::npos &&
+		str.find(L'|') == wstring::npos &&
+		str.find(L'"') == wstring::npos &&
+		str.find(L'<') == wstring::npos &&
+		str.find(L'>') == wstring::npos &&
+		str.find(L'/') == wstring::npos &&
+		str.find(L'\\') == wstring::npos &&
+		str.find(L':') == wstring::npos &&
+		str.find(L'?') == wstring::npos)
+		return true;
+	return false;
+}
 Console::Console()
 {	
 	setlocale(0, "Russian");
@@ -236,7 +249,7 @@ void Console::work()
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
-				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Переименование", validateFilename);
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Переименование", validateFilename2);
 				if (!input.canceled) {
 					wstring oldp = getPath() + files[pos]->cFileName;
 					wstring newp = getPath() + input.data;
