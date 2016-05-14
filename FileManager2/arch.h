@@ -20,3 +20,5 @@ private:
 };
 
 bool encryptRLE(wstring filename, wstring newfilename);
+
+bool decryptRLE(wstring filename);
