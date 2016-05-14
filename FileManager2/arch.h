@@ -18,3 +18,5 @@ private:
 	void UnArch(wstring &);
 
 };
+
+bool decryptRLE(wstring filename);

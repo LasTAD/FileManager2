@@ -1,7 +1,9 @@
 #include "arch.h"
+#include "files.h"
 #include <fstream>
 #include <map>
 #include <vector>
+#include <Windows.h>
 using namespace std;
 
 void Archive::StartArch(wstring & fileName)
@@ -142,4 +144,32 @@ void Archive::UnArch(wstring &fileName)
 			else break;
 		}
 	}
+}
+
+bool decryptRLE(wstring filename, wstring newFilename)
+{
+	HANDLE fa = CreateFileW(filename.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (fa == INVALID_HANDLE_VALUE) {
+		setLastErrorCode(GetLastError());
+		CloseHandle(fa);
+		return false;
+	}
+	HANDLE f = CreateFileW(newFilename.c_str(), GENERIC_READ, 0, NULL,CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f == INVALID_HANDLE_VALUE) {
+		setLastErrorCode(GetLastError());
+		CloseHandle(f);
+		return false;
+	}
+	//читаем кодированный файл
+	DWORD read;
+	long num;
+	byte b;
+	while (true) {
+		ReadFile(fa, &num, 4, &read, NULL);
+		ReadFile(fa, &b, 1, &read, NULL);
+		for (int i = 0; i < num; i++) {
+			WriteFile(f, &b, 1, &read, NULL);
+		}
+	}
+	return false;
 }
