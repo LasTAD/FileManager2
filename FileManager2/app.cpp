@@ -12,6 +12,8 @@ bool validateFilename(wstring str) {
 		str.find(L'"') == wstring::npos &&
 		str.find(L'<') == wstring::npos &&
 		str.find(L'>') == wstring::npos &&
+		str.find(L'/') == wstring::npos &&
+		str.find(L':') == wstring::npos &&
 		str.find(L'?') == wstring::npos) 
 			return true;
 	return false;
@@ -121,6 +123,7 @@ void Console::drawFiles(bool force)
 	lps = pos;
 }
 
+//записываем текущий путь
 wstring Console::getPath()
 {
 	if (path.size() == 0) return L"";
@@ -132,6 +135,7 @@ wstring Console::getPath()
 	return wss.str();
 }
 
+//основная функция
 void Console::work()
 {
 	// переменная для смещения пути
@@ -177,6 +181,7 @@ void Console::work()
 				updatePages();
 				drawFiles();
 			}
+			//страница назад
 			else if (b == 73) {
 				pos -= fpp;
 				if (pos < 0) {
@@ -185,6 +190,7 @@ void Console::work()
 				updatePages();
 				drawFiles();
 			}
+			//страница вперед
 			else if (b == 81) {
 				pos += fpp;
 				if (pos > (int)files.size() - 1) {
@@ -223,10 +229,10 @@ void Console::work()
 			int b = _getch();
 			
 			if (b == 59) { // f1 help
-				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"42", L"Сообщение от разработчиков");
+				showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"42", L"Ответ на главный вопрос жизни, вселенной и всего такого");
 			}
 			else if (b == 60) { // f2 rename
-				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию переименования", L"Ошибка");
 					continue;
 				}
@@ -331,7 +337,7 @@ void Console::work()
 			}
 			else if (b == 64) { // f6 архивация
 			//TODO архивация и деархивация
-				if (files[pos]->dwReserved1 == fold || files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
@@ -357,17 +363,18 @@ void Console::work()
 		}
 		// вход в папку
 		else if (b == 13) {
+			//переход на уровень выше
 			if (files[pos]->dwReserved1 == dotdot) {
 				path.pop_back();
 				updateFiles();
 				drawFiles();
 			}
 			else if (!(files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && files[pos]->dwReserved1 != drive && files[pos]->dwReserved1 != fold) {
+				//вход в редактор
 				startEditor(hout, getPath() + files[pos]->cFileName);
-				//showDialogWindowOk(hout, TextWhite | BgGreen, TextBlack | BgLightGreen, L"Здесь будет открываться HEX-редактор...", L"Сообщение от разработчиков");
 			}
 			else {
-				// проверка на доступ, грубовато, но сойдет
+				// проверка на доступ
 				wstring newpath = getPath() + files[pos]->cFileName + (path.size() != 0 ? L"\\" : L":\\") + L"*.*"; // фича с диском
 				HANDLE fh;
 				WIN32_FIND_DATAW fd;
@@ -388,10 +395,9 @@ void Console::work()
 		}
 		// ------------
 
-		// выход из менеджера
+		// выход из программы
 		else if (b == 27) {
 			if (showDialogWindowYN(hout, L"Вы действительно хотите покинуть программу?", L"Подтверждение выхода")) break;
 		}
-		// ------------------
 	}
 }

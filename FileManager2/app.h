@@ -6,12 +6,14 @@
 #include <vector>
 using namespace std;
 
+//перечисление типов
 enum fType {
 	dotdot = 0,
 	fold = 1,
 	drive = 2
 };
 
+//класс консоли
 class Console {
 	HANDLE hin, hout;
 	// --------------

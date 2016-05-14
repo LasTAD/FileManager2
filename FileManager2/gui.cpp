@@ -183,7 +183,6 @@ void drawWindow(CHAR_INFO* buf, int width, int height, int color, wstring captio
 	buf[width*height - 1].Attributes = color;
 }
 
-// проверена
 void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom)
 {
 	for (size_t i = 0; i < length; i++) {
@@ -196,7 +195,6 @@ void drawText(CHAR_INFO* buf, int from, int length, wstring text, int textFrom)
 	}
 }
 
-// проверена
 void fillColor(CHAR_INFO* buf, int from, int length, int color)
 {
 	for (int i = 0; i < length; ++i) {
@@ -204,7 +202,7 @@ void fillColor(CHAR_INFO* buf, int from, int length, int color)
 	}
 }
 
-// нуждаетс€ в доработке (мультилайн)
+
 bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 {
 	// значение выбранной кнопочки
@@ -253,14 +251,12 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 		++sc;
 	}
 	// -------------------------------
-	
-	
 	// кнопки
 	drawText(wnd, 64 * (3+strcount) + 3, 2, L"ƒа");
 	fillColor(wnd, 64 * (3+strcount) + 2, 4, TextWhite | BgBlue);
 	drawText(wnd, 64 * (3+strcount) + 8, 3, L"Ќет");
 	fillColor(wnd, 64 * (3+strcount) + 7, 5, TextWhite | BgCyan);
-	// ------
+	// -------------------------------
 	WriteConsoleOutputW(hout, wnd, { 64, 6 + strcount }, { 0,0 }, &sr);
 	while (true) {
 		int b = _getch();
@@ -306,7 +302,6 @@ bool showDialogWindowYN(HANDLE hout, wstring text, wstring caption)
 	return key;
 }
 
-// нуждаетс€ в доработке (мультилайн)
 int showDialogWindowYNC(HANDLE hout, wstring text, wstring caption, int def)
 {
 	// значение выбранной кнопочки
@@ -453,7 +448,7 @@ void showDialogWindowErrorOk(HANDLE hout, wstring text, wstring caption)
 	showDialogWindowOk(hout, TextWhite | BgMagenta, TextWhite | BgLightMagenta, text, caption);
 }
 
-// нуждаетс€ в доработке (мультилайн)
+
 _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption, validateInput f)
 {
 	// значение выбранной кнопочки
@@ -487,7 +482,7 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 	showCursor(hout, 10);
 	// -----------------
 	while (true) {
-		int b = _getwch(); // возможны коллапсы со значени€ми, т.к. возвращаемый тип unsigned short
+		int b = _getwch(); 
 		if (b == 0) {
 			b = _getwch();
 			// f клавиши, пропустим
@@ -580,10 +575,6 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 		}
 		else if (b == 13) {
 			// проверка на правильность
-			/*if (key && ((f != nullptr) ? !f(data) : 1)) showDialogWindowErrorOk(hout, L"»м€ файла пустое или содержит недопустимые символы", L"ќшибка"); else {
-				data = L"";
-				break;
-			}*/
 			if (!str && !key) {
 				data = L"";
 				break;
@@ -612,7 +603,7 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 				data.insert(cursorPos, 1, b);
 				++cursorPos;
 			}
-			// ------------------------------------
+			// -----------------------------
 		}
 
 		// установка границ отрисовки строки
@@ -649,7 +640,6 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 	return { data == L"" || !key, data };
 }
 
-// проверена
 void drawWindowFM(HANDLE hout)
 {
 	CHAR_INFO *buf = new CHAR_INFO[128 * 40];
@@ -704,7 +694,6 @@ void drawWindowFM(HANDLE hout)
 	delete[] buf;
 }
 
-// нуждаетс€ в доработке (отображение размера)
 void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int last, int pos)
 {
 	CHAR_INFO *names = new CHAR_INFO[84 * 35], *sizes = new CHAR_INFO[20 * 35], *types = new CHAR_INFO[20 * 35];
@@ -756,7 +745,6 @@ void drawTableFM(HANDLE hout, vector<PWIN32_FIND_DATAW> files, int first, int la
 	delete[] types;
 }
 
-// проверена
 void drawSelectRow(HANDLE hout, int pos, int color)
 {
 	CHAR_INFO *buf = new CHAR_INFO[126];
