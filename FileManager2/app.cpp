@@ -379,6 +379,41 @@ void Console::work()
 					}
 				}
 			}
+			else if (b == 65) { // f6 архивация
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
+					continue;
+				}
+
+				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя файла:", L"Разархивация", validateFilename);
+				if (!input.canceled) {
+					showStateString(L"Creating arch...");
+					wstring nf;
+					if (input.data.find(L'\\') == wstring::npos) {
+						nf = getPath() + input.data;
+					}
+					else {
+						nf = input.data;
+					}
+
+					if (!decryptRLE(getPath() + files[pos]->cFileName, nf)) {
+						hideStateString();
+						showDialogWindowErrorOk(hout, L"Не удалось разархивировать: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
+					}
+					else {
+						hideStateString();
+						updateFiles();
+						for (int i = 0; i < (int)files.size(); ++i) {
+							if (wstring(files[i]->cFileName) == input.data) {
+								pos = i;
+								updatePages();
+								break;
+							}
+						}
+						drawFiles(true);
+					}
+				}
+			}
 		}
 		// вход в папку
 		else if (b == 13) {

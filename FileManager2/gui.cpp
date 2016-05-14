@@ -5,7 +5,7 @@
 #include <exception>
 #include <sstream>
 
-wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIRECTORY \u25cf F6 ARCHIVING";
+wstring HELP_STRING = L" \u25cf F1 HELP \u25cf F2 RENAME \u25cf F3 COPY \u25cf F4 DELETE \u25cf F5 CREATE DIRECTORY \u25cf F6 ARCHIVING \u25cf F7 UNARCH";
 
 // функция для подсчета необходимого количества строк в окне
 int estimateString(wstring str, int onestrlen, int maxstrlen = -1) {

@@ -12,13 +12,12 @@ bool decryptRLE(wstring filename, wstring newFilename)
 		CloseHandle(fa);
 		return false;
 	}
-	HANDLE f = CreateFileW(newFilename.c_str(), GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE f = CreateFileW(newFilename.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (f == INVALID_HANDLE_VALUE) {
 		setLastErrorCode(GetLastError());
 		CloseHandle(f);
 		return false;
 	}
-	//?????? ???????????? ????
 	DWORD read;
 	long num;
 	byte b;
@@ -28,6 +27,7 @@ bool decryptRLE(wstring filename, wstring newFilename)
 		for (int i = 0; i < num; i++) {
 			WriteFile(f, &b, 1, &read, NULL);
 		}
+
 	}
 	return false;
 }
