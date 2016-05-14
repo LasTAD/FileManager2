@@ -585,7 +585,9 @@ _input showDialogWindowInputOkCancel(HANDLE hout, wstring text, wstring caption,
 					break;
 				}
 				else {
+					hideCursor(hout);
 					showDialogWindowErrorOk(hout, L"Неверный ввод", L"Ошибка");
+					showCursor(hout, 10);
 				}
 			}
 			// ------------------------
