@@ -32,6 +32,62 @@ bool decryptRLE(wstring filename, wstring newFilename)
 	return false;
 }
 
+bool enHuffman(wstring filename, wstring newfilename)
+{
+	HANDLE f = CreateFileW(filename.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (f == INVALID_HANDLE_VALUE) {
+		setLastErrorCode(GetLastError());
+		CloseHandle(f);
+		return false;
+	}
+	map<int,char> tab;
+	DWORD read;
+	char ch;
+	int weight[256];
+	while (&read) {
+		ReadFile(f, &ch, 1, &read, NULL);
+		weight[int(ch)]++;
+	}
+	CloseHandle(f);
+	for (int i = 0; i < 256; i++) {
+		if (weight[i]) {
+			tab.insert(pair<int,char>(weight[i], char(i)));
+		}
+	}
+
+	return true;
+}
+
+bool deHuffman(wstring filename, wstring newfilename)
+{
+
+	return false;
+}
+
+TREE * makeTree(sym * psym[], int k)
+{
+	int i;
+	sym *temp;
+	temp = (sym*)malloc(sizeof(sym));
+	temp->weight = psym[k - 1]->weight + psym[k - 2]->weight;
+	temp->left = psym[k - 1];
+	temp->right = psym[k - 2];
+	if (k == 2) {
+		return temp;
+	}
+	else {
+		for (i = 0; i<k; i++)
+			if (temp->weight>psym[i]->weight) {
+				int j;
+				for (j = k - 1; j>i; j--)
+					psym[j] = psym[j - 1];
+				psym[i] = temp;
+				break;
+			}
+	}
+	return makeTree(psym, k - 1);
+}
+
 bool encryptRLE(wstring filename, wstring newfilename)
 {
 	// open file
@@ -60,7 +116,6 @@ bool encryptRLE(wstring filename, wstring newfilename)
 	while (true) {
 		oldb = b;
 		ReadFile(f, &b, 1, &read, NULL);
-		// ?????? ??????????
 		if (firstread) {
 			firstread = false;
 			if (read == 0) break;
