@@ -1,135 +1,201 @@
 #include "arch.h"
-#include "files.h"
-#include <fstream>
-#include <map>
-#include <vector>
 
-bool decryptRLE(wstring filename, wstring newFilename)
+bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 {
-	HANDLE fa = CreateFileW(filename.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (fa == INVALID_HANDLE_VALUE) {
-		setLastErrorCode(GetLastError());
-		CloseHandle(fa);
-		return false;
-	}
-	HANDLE f = CreateFileW(newFilename.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f == INVALID_HANDLE_VALUE) {
-		setLastErrorCode(GetLastError());
-		CloseHandle(f);
-		return false;
-	}
-	DWORD read;
-	long num;
-	byte b;
-	while (true) {
-		ReadFile(fa, &num, 4, &read, NULL);
-		ReadFile(fa, &b, 1, &read, NULL);
-		for (int i = 0; i < num; i++) {
-			WriteFile(f, &b, 1, &read, NULL);
-		}
+	map<char, int> freqs; 
+	int i;
 
-	}
-	return false;
-}
-
-bool enHuffman(wstring filename, wstring newfilename)
-{
-	HANDLE f = CreateFileW(filename.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f == INVALID_HANDLE_VALUE) {
-		setLastErrorCode(GetLastError());
-		CloseHandle(f);
+	FILE *inputFile;
+	errno_t err;
+	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
+	if (err)
 		return false;
+	assert(inputFile);
+
+	char ch; // char
+	unsigned total = 0;
+	while (fscanf(inputFile, "%c", &ch) != EOF)
+	{
+		freqs[ch]++;
+		total++;
 	}
-	map<int,char> tab;
-	DWORD read;
-	char ch;
-	int weight[256];
-	while (&read) {
-		ReadFile(f, &ch, 1, &read, NULL);
-		weight[int(ch)]++;
+	tsize = (int)freqs.size();
+
+	ptable = new pnode[tsize];
+	assert(ptable);
+	float ftot = float(total);
+	map<char, int>::iterator fi;
+	for (fi = freqs.begin(), i = 0; fi != freqs.end(); ++fi, ++i)
+	{
+		ptable[i].ch = (*fi).first;
+		ptable[i].p = float((*fi).second) / ftot;
 	}
-	CloseHandle(f);
-	for (int i = 0; i < 256; i++) {
-		if (weight[i]) {
-			tab.insert(pair<int,char>(weight[i], char(i)));
-		}
+	qsort(ptable, tsize, sizeof(pnode), pnode_compare);
+
+	EncHuffman();
+
+	FILE *outputFile;
+	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"wb");
+	if (err)
+		return false;
+	assert(outputFile);
+
+	fprintf(outputFile, "%i" NL, tsize);
+	for (i = 0; i<tsize; i++)
+	{
+		fprintf(outputFile, "%c\t%f\t%s" NL, ptable[i].ch, ptable[i].p, codes[ptable[i].ch].c_str());
 	}
 
+	fseek(inputFile, SEEK_SET, 0);
+	fprintf(outputFile, NL);
+	while (fscanf(inputFile, "%c", &ch) != EOF)
+	{
+		fprintf(outputFile, "%s", codes[ch].c_str());
+	}
+
+	codes.clear();
+	delete[] ptable;
+	_fcloseall();
 	return true;
 }
 
-bool deHuffman(wstring filename, wstring newfilename)
+bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 {
+	FILE *inputFile;
+	errno_t err;
+	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
+	if (err)
+		return false;
+	assert(inputFile);
 
-	return false;
-}
-
-TREE * makeTree(sym * psym[], int k)
-{
+	fscanf(inputFile, "%i", &tsize);
+	char ch, code[128];
+	float p;
 	int i;
-	sym *temp;
-	temp = (sym*)malloc(sizeof(sym));
-	temp->weight = psym[k - 1]->weight + psym[k - 2]->weight;
-	temp->left = psym[k - 1];
-	temp->right = psym[k - 2];
-	if (k == 2) {
-		return temp;
+	fgetc(inputFile); 
+	for (i = 0; i<tsize; i++)
+	{
+		ch = fgetc(inputFile);
+		fscanf(inputFile, "%f %s", &p, code);
+		codes[ch] = code;
+		fgetc(inputFile); 
 	}
-	else {
-		for (i = 0; i<k; i++)
-			if (temp->weight>psym[i]->weight) {
-				int j;
-				for (j = k - 1; j>i; j--)
-					psym[j] = psym[j - 1];
-				psym[i] = temp;
-				break;
+	fgetc(inputFile); 
+
+	FILE *outputFile;
+	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"w");
+	if (err)
+		return false;
+	assert(outputFile);
+
+	string accum = "";
+	map<char, string>::iterator ci;
+	while ((ch = fgetc(inputFile)) != EOF)
+	{
+		accum += ch;
+		for (ci = codes.begin(); ci != codes.end(); ++ci)
+			if (!strcmp((*ci).second.c_str(), accum.c_str()))
+			{
+				accum = "";
+				fprintf(outputFile, "%c", (*ci).first);
 			}
 	}
-	return makeTree(psym, k - 1);
-}
-
-bool encryptRLE(wstring filename, wstring newfilename)
-{
-	// open file
-	HANDLE f = CreateFile(filename.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (f == INVALID_HANDLE_VALUE) {
-		setLastErrorCode(GetLastError());
-		CloseHandle(f);
-		return false;
-	}
-
-	// create new file
-	HANDLE w = CreateFile(newfilename.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (w == INVALID_HANDLE_VALUE) {
-		setLastErrorCode(GetLastError());
-		CloseHandle(w);
-		return false;
-	}
-
-	// read file
-	byte b = 1, oldb;
-	uint32 count = 0;
-	DWORD read;
-	bool firstread = true;
-	DWORD writen;
-
-	while (true) {
-		oldb = b;
-		ReadFile(f, &b, 1, &read, NULL);
-		if (firstread) {
-			firstread = false;
-			if (read == 0) break;
-		}
-		else if (b != oldb || read == 0) {
-			WriteFile(w, &count, 4, &writen, NULL);
-			WriteFile(w, &oldb, 1, &writen, NULL);
-			if (read == 0) break;
-			if (b != oldb) count = 0;
-		}
-		++count;
-	}
-
-	CloseHandle(f);
-	CloseHandle(w);
+	_fcloseall();
 	return true;
 }
+
+void Coder::EncHuffman()
+{
+	treenode *n;
+	vector<treenode*> tops; 
+	int i, numtop = tsize;
+	for (i = 0; i<numtop; i++)
+	{
+		n = new treenode;
+		assert(n);
+		n->ch = ptable[i].ch;
+		n->p = ptable[i].p;
+		n->left = NULL;
+		n->right = NULL;
+		tops.push_back(n);
+	}
+
+	while (numtop > 1)
+	{
+		n = new treenode;
+		assert(n);
+		n->p = tops[numtop - 2]->p + tops[numtop - 1]->p;
+		n->left = tops[numtop - 2];
+		n->right = tops[numtop - 1];
+		if (n->left->p < n->right->p)
+		{
+			n->lcode = '0';
+			n->rcode = '1';
+		}
+		else
+		{
+			n->lcode = '1';
+			n->rcode = '0';
+		}
+		tops.pop_back();
+		tops.pop_back();
+		bool isins = false;
+		std::vector<treenode*>::iterator ti;
+		for (ti = tops.begin(); ti != tops.end(); ++ti)
+			if ((*ti)->p < n->p)
+			{
+				tops.insert(ti, n);
+				isins = true;
+				break;
+			}
+		if (!isins) tops.push_back(n);
+		numtop--;
+	}
+
+	treenode *root = tops[0];
+	GenerateCode(root);
+
+	DestroyNode(root);
+	tops.clear();
+}
+
+void Coder::GenerateCode(treenode * node)
+{
+	static string sequence = "";
+	if (node->left)
+	{
+		sequence += node->lcode;
+		GenerateCode(node->left);
+	}
+
+	if (node->right)
+	{
+		sequence += node->rcode;
+		GenerateCode(node->right);
+	}
+
+	if (!node->left && !node->right)
+		codes[node->ch] = sequence;
+
+	int l = (int)sequence.length();
+	if (l > 1) sequence = sequence.substr(0, l - 1);
+	else sequence = "";
+}
+
+void Coder::DestroyNode(treenode * node)
+{
+	if (node->left)
+	{
+		DestroyNode(node->left);
+		delete node->left;
+		node->left = NULL;
+	}
+
+	if (node->right)
+	{
+		DestroyNode(node->right);
+		delete node->right;
+		node->right = NULL;
+	}
+}
+

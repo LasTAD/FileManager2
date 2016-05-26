@@ -1,22 +1,51 @@
-#pragma once
-#include <iostream>
-#include <queue>
+#ifdef _WIN32
+#define _CRT_SECURE_NO_DEPRECATE
+#define NL "\r\n"
+#else
+#define NL "\n"
+#endif
+
+#include <string>
+#include <vector>
+#include <map>
+#include <cassert>
 
 using namespace std;
 
-bool encryptRLE(wstring filename, wstring newfilename);
+struct pnode
+{
+	char ch; // char
+	float p; // probability
+};
 
-bool decryptRLE(wstring filename, wstring newfilename);
+static int pnode_compare(const void *elem1, const void *elem2)
+{
+	const pnode a = *(pnode*)elem1;
+	const pnode b = *(pnode*)elem2;
+	if (a.p < b.p) return 1; // 1 - less (reverse for decreasing sort)
+	else if (a.p > b.p) return -1;
+	return 0;
+}
 
-bool enHuffman(wstring filename, wstring newfilename);
+struct treenode : public pnode
+{
+	char lcode;
+	char rcode;
+	treenode *left; 
+	treenode *right;
+};
 
-bool deHuffman(wstring filename, wstring newfilename);
-
-typedef struct TREE {
-	int weight;
-	char ch;
-	TREE *left;
-	TREE *right;
-}sym;
-
-TREE * makeTree(sym * psym[], int k);
+class Coder
+{
+private:
+	int tsize; 
+	pnode *ptable; 
+	map<char, string> codes; 
+public:
+	bool Encode(wstring inputFilename, wstring outputFilename);
+	bool Decode(wstring inputFilename, wstring outputFilename);
+private:
+	void EncHuffman();
+	void GenerateCode(treenode *node); 
+	void DestroyNode(treenode *node); 
+};

@@ -67,7 +67,7 @@ void Console::updatePages()
 //отрабатывает только при гарантированном доступе к директории
 void Console::updateFiles()
 {
-	showStateString(L"Parsing dir...");
+	showStateString(L"Parsing directory...");
 	if (path.size() != 0) {
 		vector<PWIN32_FIND_DATAW> findFiles;
 		getFiles(getPath(), findFiles);
@@ -84,7 +84,7 @@ void Console::updateFiles()
 		}
 		int counter_d = 0;
 		for (auto f : findFiles) {
-			showStateString(L"Parsing dir " + to_wstring(counter_d) + L'/' + to_wstring(findFiles.size()));
+			showStateString(L"Parsing directory " + to_wstring(counter_d) + L'/' + to_wstring(findFiles.size()));
 			if (f->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				auto ce = countFiles(getPath() + f->cFileName + L"\\");
 				if (ce.all != -1) {
@@ -151,6 +151,7 @@ wstring Console::getPath()
 //основная функция
 void Console::work()
 {
+	Coder arch;
 	// переменная для смещения пути
 	int path_shift = 0;
 	// однократная отрисовка окна
@@ -305,7 +306,7 @@ void Console::work()
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию удаления", L"Ошибка");
 					continue;
 				}
-				if (showDialogWindowYN(hout, L"Действительно удалить этот элемент?", L"Вопрос")) {
+				if (showDialogWindowYN(hout, L"Действительно удалить этот элемент?", L"Подтверждение")) {
 					showStateString(L"Deleting element...");
 					bool r = removeFile(getPath() + files[pos]->cFileName, files[pos]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
 					hideStateString();
@@ -361,7 +362,9 @@ void Console::work()
 						nf = input.data;
 					}
 
-					if (!encryptRLE(getPath() + files[pos]->cFileName, nf)) {
+					if (!arch.Encode(getPath() + files[pos]->cFileName, nf)) 
+					
+					{
 						hideStateString();
 						showDialogWindowErrorOk(hout, L"Не удалось создать архив: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
@@ -379,15 +382,15 @@ void Console::work()
 					}
 				}
 			}
-			else if (b == 65) { // f6 архивация
+			else if (b == 65) { // f7 разархивация
 				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
-					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
+					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию разархивации", L"Ошибка");
 					continue;
 				}
 
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя файла:", L"Разархивация", validateFilename);
 				if (!input.canceled) {
-					showStateString(L"Creating arch...");
+					showStateString(L"Unarchiving...");
 					wstring nf;
 					if (input.data.find(L'\\') == wstring::npos) {
 						nf = getPath() + input.data;
@@ -396,7 +399,8 @@ void Console::work()
 						nf = input.data;
 					}
 
-					if (!decryptRLE(getPath() + files[pos]->cFileName, nf)) {
+					if (!arch.Decode(getPath() + files[pos]->cFileName, nf)) 
+					{
 						hideStateString();
 						showDialogWindowErrorOk(hout, L"Не удалось разархивировать: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
 					}
