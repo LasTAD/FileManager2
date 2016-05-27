@@ -350,7 +350,10 @@ void Console::work()
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
-
+				if (!(((files[pos]->nFileSizeHigh) * (MAXDWORD + 1)) + (files[pos]->nFileSizeLow))) {
+					showDialogWindowErrorOk(hout, L"Нельзя архивировать файл нулевого размера", L"Ошибка");
+					continue;
+				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя архива:", L"Создание архива", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Creating arch...");
