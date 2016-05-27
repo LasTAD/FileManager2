@@ -48,10 +48,39 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 
 	fseek(inputFile, SEEK_SET, 0);
 	fprintf(outputFile, NL);
-	while (fscanf(inputFile, "%c", &ch) != EOF)
-	{
-		fprintf(outputFile, "%s", codes[ch].c_str());
+
+	int oldpos = ftell(outputFile);
+	unsigned long long bitscount = 0;
+	int bitswait = 8;
+	char byte;
+	fwrite(&bitscount, 8, 1, outputFile);
+
+	while (fscanf(inputFile, "%c", &ch) != EOF) {
+		string &d = codes[ch];
+		for (int i = 0; i < d.length(); ++i) {
+			if (bitswait == 0) {
+				bitswait = 8;
+				fwrite(&byte, 1, 1, outputFile);
+			}
+			if (d[i] == '1') {
+				byte |= 1 << --bitswait;
+				//--bitswait;
+			}
+			else {
+				byte &= ~(1 << --bitswait);
+				//--bitswait;
+			}
+			bitscount++;
+		}
+
+		// old
+		// fprintf(outputFile, "%s", codes[ch].c_str());
 	}
+	if (bitswait != 8) {
+		fwrite(&byte, 1, 1, outputFile);
+	}
+	fseek(outputFile, oldpos, SEEK_SET);
+	fwrite(&bitscount, 8, 1, outputFile);
 
 	codes.clear();
 	delete[] ptable;
