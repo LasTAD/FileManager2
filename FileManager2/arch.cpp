@@ -1,7 +1,6 @@
 #include "arch.h"
 
-bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
-{
+bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 	map<char, int> freqs; 
 	int i;
 
@@ -14,8 +13,9 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 
 	char ch; // char
 	unsigned total = 0;
-	while (fscanf(inputFile, "%c", &ch) != EOF)
-	{
+	//while (fscanf(inputFile, "%c", &ch) != EOF) {
+	while (!feof(inputFile) && fread(&ch, 1, 1, inputFile) != 0) {
+		
 		freqs[ch]++;
 		total++;
 	}
@@ -39,24 +39,38 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 	if (err)
 		return false;
 	
+	//
+	fwrite(&tsize, 2, 1, outputFile);
+	for (i = 0; i < tsize; i++) {
+		fwrite(&ptable[i].ch, 1, 1, outputFile);
+		int length = codes[ptable[i].ch].length();
+		fwrite(&length, 2, 1, outputFile);
+		fwrite(codes[ptable[i].ch].c_str(), 1, length, outputFile);
+	}
+	//
 
-	fprintf(outputFile, "%i" NL, tsize);
+	/*fprintf(outputFile, "%i" NL, tsize);
 	for (i = 0; i<tsize; i++)
 	{
 		fprintf(outputFile, "%c\t%f\t%s" NL, ptable[i].ch, ptable[i].p, codes[ptable[i].ch].c_str());
-	}
+	}*/
+
+
 
 	fseek(inputFile, SEEK_SET, 0);
-	fprintf(outputFile, NL);
+	// fprintf(outputFile, NL);
 
 	int oldpos = ftell(outputFile);
 	unsigned long long bitscount = 0;
 	int bitswait = 8;
 	char byte;
 	fwrite(&bitscount, 8, 1, outputFile);
-
+	string text;
 	while (fscanf(inputFile, "%c", &ch) != EOF) {
+	//while (!feof(inputFile) && fread(&ch, 1, 1, inputFile) != 0) {
 		string &d = codes[ch];
+		int deb = text.find("просто не то") != string::npos;
+		text += ch;
 		for (int i = 0; i < d.length(); ++i) {
 			if (bitswait == 0) {
 				bitswait = 8;
@@ -83,28 +97,35 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 	return true;
 }
 
-bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
-{
+bool Coder::Decode(wstring  inputFilename, wstring  outputFilename) {
 	FILE *inputFile;
 	errno_t err;
-	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
+	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"rb");
 	if (err)
 		return false;
 
-	fscanf(inputFile, "%i", &tsize);
+	//fscanf(inputFile, "%i", &tsize);
+	fread(&tsize, 2, 1, inputFile);
 	char ch;
 	char code[128];
 	float p;
 	int i;
-	fgetc(inputFile); 
+	//fgetc(inputFile); 
 	for (i = 0; i<tsize; i++)
 	{
+		/*
 		ch = fgetc(inputFile);
 		fscanf(inputFile, "%f %s", &p, code);
 		codes[ch] = code;
-		fgetc(inputFile); 
+		fgetc(inputFile); */
+		fread(&ch, 1, 1, inputFile);
+		short length;
+		fread(&length, 2, 1, inputFile);
+		fread(code, 1, length, inputFile);
+		code[length] = 0;
+		codes[ch] = code;
 	}
-	fgetc(inputFile); 
+	//fgetc(inputFile); 
 
 	FILE *outputFile;
 	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"w");
@@ -114,8 +135,7 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 	string accum = "";
 	unsigned long long bitcount;
 	fread(&bitcount, 8, 1, inputFile);
-	while ((ch = fgetc(inputFile)) != EOF && bitcount != 0)
-	{
+	while (fscanf(inputFile, "%c", &ch) != EOF && bitcount != 0) {
 		for (int i = 7; i > -1; --i) {
 			bool bit = (ch >> i) & 1;
 
@@ -128,34 +148,19 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 					break;
 				}
 			}
+			--bitcount;
 		}
-		--bitcount;
-		/*
-		bitset<16> bitset = (int)ch;
-		accum += bitset.to_string<char, char_traits<char>, allocator<char> >();
-		for (ci = codes.begin(); ci != codes.end(); ++ci) {
-			for (int i = 0; i < 7;i++) {
-				ch1 += accum[i];
-				if (!strcmp((*ci).second.c_str(), ch1.c_str()))
-				{
-					accum = accum.substr(i, 8);
-					fprintf(outputFile, "%c", (*ci).first);
-				}
-			}
-		}*/
 	}
 
 	_fcloseall();
 	return true;
 }
 
-void Coder::EncHuffman()
-{
+void Coder::EncHuffman() {
 	treenode *n;
 	vector<treenode*> tops; 
 	int i, numtop = tsize;
-	for (i = 0; i<numtop; i++)
-	{
+	for (i = 0; i<numtop; i++) {
 		n = new treenode;
 		assert(n);
 		n->ch = ptable[i].ch;
