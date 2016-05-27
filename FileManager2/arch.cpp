@@ -6,16 +6,14 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 
 	FILE *inputFile;
 	errno_t err;
-	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
+	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"rb");
 	if (err)
 		return false;
 	assert(inputFile);
 
-	char ch; // char
+	char ch;
 	unsigned total = 0;
-	//while (fscanf(inputFile, "%c", &ch) != EOF) {
 	while (!feof(inputFile) && fread(&ch, 1, 1, inputFile) != 0) {
-		
 		freqs[ch]++;
 		total++;
 	}
@@ -39,7 +37,6 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 	if (err)
 		return false;
 	
-	//
 	fwrite(&tsize, 2, 1, outputFile);
 	for (i = 0; i < tsize; i++) {
 		fwrite(&ptable[i].ch, 1, 1, outputFile);
@@ -47,18 +44,8 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 		fwrite(&length, 2, 1, outputFile);
 		fwrite(codes[ptable[i].ch].c_str(), 1, length, outputFile);
 	}
-	//
-
-	/*fprintf(outputFile, "%i" NL, tsize);
-	for (i = 0; i<tsize; i++)
-	{
-		fprintf(outputFile, "%c\t%f\t%s" NL, ptable[i].ch, ptable[i].p, codes[ptable[i].ch].c_str());
-	}*/
-
-
 
 	fseek(inputFile, SEEK_SET, 0);
-	// fprintf(outputFile, NL);
 
 	int oldpos = ftell(outputFile);
 	unsigned long long bitscount = 0;
@@ -66,7 +53,6 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 	char byte;
 	fwrite(&bitscount, 8, 1, outputFile);
 	while (fscanf(inputFile, "%c", &ch) != EOF) {
-	//while (!feof(inputFile) && fread(&ch, 1, 1, inputFile) != 0) {
 		string &d = codes[ch];
 		for (int i = 0; i < d.length(); ++i) {
 			if (bitswait == 0) {
@@ -101,20 +87,14 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename) {
 	if (err)
 		return false;
 
-	//fscanf(inputFile, "%i", &tsize);
 	fread(&tsize, 2, 1, inputFile);
 	char ch;
 	char code[128];
 	float p;
 	int i;
-	//fgetc(inputFile); 
+
 	for (i = 0; i<tsize; i++)
 	{
-		/*
-		ch = fgetc(inputFile);
-		fscanf(inputFile, "%f %s", &p, code);
-		codes[ch] = code;
-		fgetc(inputFile); */
 		fread(&ch, 1, 1, inputFile);
 		short length;
 		fread(&length, 2, 1, inputFile);
@@ -122,10 +102,9 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename) {
 		code[length] = 0;
 		codes[ch] = code;
 	}
-	//fgetc(inputFile); 
 
 	FILE *outputFile;
-	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"w");
+	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"wb");
 	if (err)
 		return false;
 
