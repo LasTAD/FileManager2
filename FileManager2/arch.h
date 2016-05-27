@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <cassert>
+#include <bitset>
 
 using namespace std;
 

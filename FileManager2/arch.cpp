@@ -38,7 +38,7 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"wb");
 	if (err)
 		return false;
-	assert(outputFile);
+	
 
 	fprintf(outputFile, "%i" NL, tsize);
 	for (i = 0; i<tsize; i++)
@@ -90,10 +90,10 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
 	if (err)
 		return false;
-	assert(inputFile);
 
 	fscanf(inputFile, "%i", &tsize);
-	char ch, code[128];
+	unsigned char ch;
+	char code[128];
 	float p;
 	int i;
 	fgetc(inputFile); 
@@ -110,19 +110,22 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"w");
 	if (err)
 		return false;
-	assert(outputFile);
 
-	string accum = "";
+	string accum = NULL;
 	map<char, string>::iterator ci;
 	while ((ch = fgetc(inputFile)) != EOF)
 	{
-		accum += ch;
-		for (ci = codes.begin(); ci != codes.end(); ++ci)
-			if (!strcmp((*ci).second.c_str(), accum.c_str()))
-			{
-				accum = "";
-				fprintf(outputFile, "%c", (*ci).first);
+		bitset<16> bitset = (int)ch;
+		accum = bitset.to_string<char, char_traits<char>, allocator<char> >();
+		for (ci = codes.begin(); ci != codes.end(); ++ci) {
+			while (true) {
+				if (!strcmp((*ci).second.c_str(), accum.c_str()))
+				{
+					accum = "";
+					fprintf(outputFile, "%c", (*ci).first);
+				}
 			}
+		}
 	}
 	_fcloseall();
 	return true;
