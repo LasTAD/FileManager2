@@ -65,12 +65,9 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 	int bitswait = 8;
 	char byte;
 	fwrite(&bitscount, 8, 1, outputFile);
-	string text;
 	while (fscanf(inputFile, "%c", &ch) != EOF) {
 	//while (!feof(inputFile) && fread(&ch, 1, 1, inputFile) != 0) {
 		string &d = codes[ch];
-		int deb = text.find("просто не то") != string::npos;
-		text += ch;
 		for (int i = 0; i < d.length(); ++i) {
 			if (bitswait == 0) {
 				bitswait = 8;
@@ -136,7 +133,7 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename) {
 	unsigned long long bitcount;
 	fread(&bitcount, 8, 1, inputFile);
 	while (fscanf(inputFile, "%c", &ch) != EOF && bitcount != 0) {
-		for (int i = 7; i > -1; --i) {
+		for (int i = 7; i > -1 && bitcount != 0; --i) {
 			bool bit = (ch >> i) & 1;
 
 			if (bit) accum += '1'; else accum += '0';
