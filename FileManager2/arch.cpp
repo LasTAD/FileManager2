@@ -92,7 +92,7 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 		return false;
 
 	fscanf(inputFile, "%i", &tsize);
-	unsigned char ch;
+	char ch;
 	char code[128];
 	float p;
 	int i;
@@ -112,10 +112,25 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 		return false;
 
 	string accum = "";
-	map<char, string>::iterator ci;
-	while ((ch = fgetc(inputFile)) != EOF)
+	unsigned long long bitcount;
+	fread(&bitcount, 8, 1, inputFile);
+	while ((ch = fgetc(inputFile)) != EOF && bitcount != 0)
 	{
-		string ch1 = "";
+		for (int i = 7; i > -1; --i) {
+			bool bit = (ch >> i) & 1;
+
+			if (bit) accum += '1'; else accum += '0';
+
+			for (auto it = codes.begin(); it != codes.end(); ++it) {
+				if ((*it).second == accum) {
+					fprintf(outputFile, "%c", (*it).first);
+					accum = "";
+					break;
+				}
+			}
+		}
+		--bitcount;
+		/*
 		bitset<16> bitset = (int)ch;
 		accum += bitset.to_string<char, char_traits<char>, allocator<char> >();
 		for (ci = codes.begin(); ci != codes.end(); ++ci) {
@@ -127,8 +142,9 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 					fprintf(outputFile, "%c", (*ci).first);
 				}
 			}
-		}
+		}*/
 	}
+
 	_fcloseall();
 	return true;
 }
@@ -202,7 +218,8 @@ void Coder::GenerateCode(treenode * node)
 		sequence += node->rcode;
 		GenerateCode(node->right);
 	}
-
+	if (tsize == 1)
+		codes[node->ch] = sequence = "0";
 	if (!node->left && !node->right)
 		codes[node->ch] = sequence;
 
