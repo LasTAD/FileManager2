@@ -92,10 +92,10 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 		return false;
 
 	fscanf(inputFile, "%i", &tsize);
-	char ch, code[128];
+	unsigned char ch;
+	char code[128];
 	float p;
 	int i;
-	unsigned long long bitscount = 0;
 	fgetc(inputFile); 
 	for (i = 0; i<tsize; i++)
 	{
@@ -105,24 +105,25 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 		fgetc(inputFile); 
 	}
 	fgetc(inputFile); 
-	fscanf(inputFile, "%lli", bitscount);
+
 	FILE *outputFile;
-	err = _wfopen_s(&outputFile, outputFilename.c_str(), L"w");
+	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"w");
 	if (err)
 		return false;
 
-	char accum = NULL;
+	string accum = "";
 	map<char, string>::iterator ci;
 	while ((ch = fgetc(inputFile)) != EOF)
 	{
-		for (int i = 0; i < 7; i++) 
-		{
-		accum = (ch >> i) & 1;
-		for (ci = codes.begin(); ci != codes.end(); ++ci) 
-		{
-				if (!strcmp((*ci).second.c_str(), &accum))
+		string ch1 = "";
+		bitset<16> bitset = (int)ch;
+		accum += bitset.to_string<char, char_traits<char>, allocator<char> >();
+		for (ci = codes.begin(); ci != codes.end(); ++ci) {
+			for (int i = 0; i < 7;i++) {
+				ch1 += accum[i];
+				if (!strcmp((*ci).second.c_str(), ch1.c_str()))
 				{
-					accum = NULL;
+					accum = accum.substr(i, 8);
 					fprintf(outputFile, "%c", (*ci).first);
 				}
 			}
