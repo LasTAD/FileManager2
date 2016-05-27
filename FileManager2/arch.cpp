@@ -116,17 +116,19 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 	if (err)
 		return false;
 
-	string accum = NULL;
+	string accum = "";
 	map<char, string>::iterator ci;
 	while ((ch = fgetc(inputFile)) != EOF)
 	{
+		string ch1 = "";
 		bitset<16> bitset = (int)ch;
-		accum = bitset.to_string<char, char_traits<char>, allocator<char> >();
+		accum += bitset.to_string<char, char_traits<char>, allocator<char> >();
 		for (ci = codes.begin(); ci != codes.end(); ++ci) {
-			while (true) {
-				if (!strcmp((*ci).second.c_str(), accum.c_str()))
+			for (int i = 0; i < 7;i++) {
+				ch1 += accum[i];
+				if (!strcmp((*ci).second.c_str(), ch1.c_str()))
 				{
-					accum = "";
+					accum = accum.substr(i, 8);
 					fprintf(outputFile, "%c", (*ci).first);
 				}
 			}
