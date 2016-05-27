@@ -10,9 +10,8 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
 	if (err)
 		return false;
-	assert(inputFile);
-
-	char ch; // char
+	
+	char ch; 
 	unsigned total = 0;
 	while (fscanf(inputFile, "%c", &ch) != EOF)
 	{
@@ -22,7 +21,7 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 	tsize = (int)freqs.size();
 
 	ptable = new pnode[tsize];
-	assert(ptable);
+	
 	float ftot = float(total);
 	map<char, int>::iterator fi;
 	for (fi = freqs.begin(), i = 0; fi != freqs.end(); ++fi, ++i)
@@ -87,7 +86,7 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 {
 	FILE *inputFile;
 	errno_t err;
-	err=_wfopen_s(&inputFile, inputFilename.c_str(), L"r");
+	err = _wfopen_s(&inputFile, inputFilename.c_str(), L"r");
 	if (err)
 		return false;
 
@@ -130,21 +129,7 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename)
 			}
 		}
 		--bitcount;
-		/*
-		bitset<16> bitset = (int)ch;
-		accum += bitset.to_string<char, char_traits<char>, allocator<char> >();
-		for (ci = codes.begin(); ci != codes.end(); ++ci) {
-			for (int i = 0; i < 7;i++) {
-				ch1 += accum[i];
-				if (!strcmp((*ci).second.c_str(), ch1.c_str()))
-				{
-					accum = accum.substr(i, 8);
-					fprintf(outputFile, "%c", (*ci).first);
-				}
-			}
-		}*/
 	}
-
 	_fcloseall();
 	return true;
 }

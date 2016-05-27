@@ -346,7 +346,7 @@ void Console::work()
 				}
 			}
 			else if (b == 64) { // f6 архивация
-				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot) {
+				if (files[pos]->dwReserved1 == drive || files[pos]->dwReserved1 == dotdot||files[pos]->dwReserved1==fold) {
 					showDialogWindowErrorOk(hout, L"К данному объекту нельзя применить операцию архивации", L"Ошибка");
 					continue;
 				}
