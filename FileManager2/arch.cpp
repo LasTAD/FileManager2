@@ -64,17 +64,12 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename)
 			}
 			if (d[i] == '1') {
 				byte |= 1 << --bitswait;
-				//--bitswait;
 			}
 			else {
 				byte &= ~(1 << --bitswait);
-				//--bitswait;
 			}
 			bitscount++;
 		}
-
-		// old
-		// fprintf(outputFile, "%s", codes[ch].c_str());
 	}
 	if (bitswait != 8) {
 		fwrite(&byte, 1, 1, outputFile);
