@@ -36,7 +36,8 @@ bool Coder::Encode(wstring  inputFilename, wstring  outputFilename) {
 	err=_wfopen_s(&outputFile, outputFilename.c_str(), L"wb");
 	if (err)
 		return false;
-	
+	long long mw = 8732567825;
+	fwrite(&mw, 8, 1, outputFile); // mw
 	fwrite(&tsize, 2, 1, outputFile);
 	for (i = 0; i < tsize; i++) {
 		fwrite(&ptable[i].ch, 1, 1, outputFile);
@@ -87,6 +88,13 @@ bool Coder::Decode(wstring  inputFilename, wstring  outputFilename) {
 	if (err)
 		return false;
 
+	long long mw = 8732567825;
+	long long rmw;
+	fread(&rmw, 8, 1, inputFile);
+	if (rmw != mw) {
+		_fcloseall();
+		return false;
+	}
 	fread(&tsize, 2, 1, inputFile);
 	char ch;
 	char code[128];

@@ -323,6 +323,10 @@ void Console::work()
 				}
 			}
 			else if (b == 63) { // f5 create dir
+				if (path.size() == 0) {
+					showDialogWindowErrorOk(hout, L"Здесь нельзя создать директорию", L"Ошибка");
+					continue;
+				}
 				auto input = showDialogWindowInputOkCancel(hout, L"Введите новое имя:", L"Создание директории", validateFilename);
 				if (!input.canceled) {
 					showStateString(L"Creating directory...");
@@ -365,11 +369,12 @@ void Console::work()
 						nf = input.data;
 					}
 
+					arch = Coder();
 					if (!arch.Encode(getPath() + files[pos]->cFileName, nf)) 
 					
 					{
 						hideStateString();
-						showDialogWindowErrorOk(hout, L"Не удалось создать архив: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
+						showDialogWindowErrorOk(hout, L"Не удалось создать архив", L"Ошибка");
 					}
 					else {
 						hideStateString();
@@ -401,11 +406,11 @@ void Console::work()
 					else {
 						nf = input.data;
 					}
-
+					arch = Coder();
 					if (!arch.Decode(getPath() + files[pos]->cFileName, nf)) 
 					{
 						hideStateString();
-						showDialogWindowErrorOk(hout, L"Не удалось разархивировать: " + errorCodeToString(getLastErrorCode()), L"Ошибка");
+						showDialogWindowErrorOk(hout, L"Не удалось разархивировать", L"Ошибка");
 					}
 					else {
 						hideStateString();
